@@ -187,6 +187,28 @@ function meetsRequirements(
     return false;
   }
 
+  const personalWealth =
+  gameState.player
+    ?.personalWealth ?? 0;
+
+if (
+  requirements.minimumPersonalWealth !==
+    undefined &&
+  personalWealth <
+    requirements.minimumPersonalWealth
+) {
+  return false;
+}
+
+if (
+  requirements.maximumPersonalWealth !==
+    undefined &&
+  personalWealth >
+    requirements.maximumPersonalWealth
+) {
+  return false;
+}
+
   return true;
 }
 
@@ -266,39 +288,90 @@ export function getNextDecision(
   const nextDecisionNumber =
     completedDecisions + 1;
 
-  /*
-   * Evento obrigatório da bandeira.
-   * Aparece na 5ª decisão ou na primeira
-   * oportunidade depois dela.
-   */
-  if (nextDecisionNumber >= 5) {
-    const flagDecision = decisions.find(
-      (decision) =>
-        decision.id ===
-        "new-national-flag"
-    );
+  const usedDecisionIds =
+    Array.isArray(
+      gameState.usedDecisionIds
+    )
+      ? gameState.usedDecisionIds
+      : [];
 
-    const canShowFlag =
-      flagDecision &&
-      canUseDecision(
-        gameState,
-        flagDecision
-      ) &&
-      meetsRequirements(
-        gameState,
-        flagDecision
+  /*
+   * Eventos que devem acontecer em
+   * momentos específicos do governo.
+   */
+  const scheduledEvents = [
+    {
+      id: "faith-interview",
+      showAt: 3
+    },
+    {
+      id: "new-national-flag",
+      showAt: 5
+    },
+    {
+      id: "war-of-blocs",
+      showAt: 14
+    }
+  ];
+
+  /*
+   * Procura um evento obrigatório
+   * que já tenha chegado à sua vez.
+   */
+  for (
+    const scheduledEvent
+    of scheduledEvents
+  ) {
+    const wasUsed =
+      usedDecisionIds.includes(
+        scheduledEvent.id
       );
 
-    if (canShowFlag) {
-      return flagDecision;
+    const reachedScheduledMoment =
+      nextDecisionNumber >=
+      scheduledEvent.showAt;
+
+    if (
+      reachedScheduledMoment &&
+      !wasUsed
+    ) {
+      const scheduledDecision =
+        decisions.find(
+          (decision) =>
+            decision.id ===
+            scheduledEvent.id
+        );
+
+      if (scheduledDecision) {
+        return scheduledDecision;
+      }
     }
   }
 
   /*
-   * Seleção normal dos demais eventos.
+   * Seleção das decisões comuns.
    */
   const availableDecisions =
     decisions.filter((decision) => {
+      const scheduledEvent =
+        scheduledEvents.find(
+          (event) =>
+            event.id === decision.id
+        );
+
+      /*
+       * Impede que um evento agendado
+       * apareça aleatoriamente antes
+       * da decisão programada.
+       */
+      if (
+        scheduledEvent &&
+        nextDecisionNumber <
+          scheduledEvent.showAt
+      ) {
+        return false;
+      }
+
       return (
         canUseDecision(
           gameState,
@@ -311,7 +384,9 @@ export function getNextDecision(
       );
     });
 
-  if (availableDecisions.length === 0) {
+  if (
+    availableDecisions.length === 0
+  ) {
     return null;
   }
 

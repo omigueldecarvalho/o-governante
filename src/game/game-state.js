@@ -39,6 +39,8 @@ export function createInitialGameState(playerData) {
     personalWealth: base.personalWealth,
     candidateNumber: playerData.candidateNumber,
     footballTeam: null,
+    religion: null,
+
   },
 
     indicators: {

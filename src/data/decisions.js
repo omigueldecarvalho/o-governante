@@ -1714,11 +1714,6 @@ weight: 8,
   id: "new-national-flag",
   type: "flag-designer",
   category: "cultura",
-  weight: 3,
-
-  requirements: {
-  minimumDecisions: 5
-},
 
   character: {
     name: "Nando Rabisco",
@@ -1729,6 +1724,74 @@ weight: 8,
 
   description:
     "O governo pode manter a bandeira atual ou criar um novo símbolo nacional.",
+
+  choices: []
+},
+
+{
+  id: "tigrinho-planalto",
+  type: "tigrinho",
+  category: "patrimônio",
+  weight: 4,
+
+  requirements: {
+    minimumDecisions: 7,
+    minimumPersonalWealth: 10000
+  },
+
+  character: {
+    name: "Beto Bet",
+    role: "Assessor de investimentos alternativos"
+  },
+
+  title: "Tigrinho do Planalto",
+
+  description:
+    "Um aplicativo promete multiplicar o patrimônio pessoal do governante.",
+
+  choices: []
+},
+
+{
+  id: "faith-interview",
+  type: "religion-quiz",
+  category: "sociedade",
+
+  requirements: {
+    minimumDecisions: 2
+  },
+
+  character: {
+    name: "Sônia Pergunta",
+    role: "Apresentadora do Brasil em Pauta"
+  },
+
+  title: "Qual é a sua fé?",
+
+  description:
+    "Uma entrevista ao vivo pretende descobrir se a religião do governante vem da fé ou das pesquisas eleitorais.",
+
+  choices: []
+},
+
+{
+  id: "war-of-blocs",
+  type: "war-game",
+  category: "internacional",
+
+  requirements: {
+    minimumDecisions: 12
+  },
+
+  character: {
+    name: "General Armando Guerra",
+    role: "Comandante das Forças Nacionais"
+  },
+
+  title: "Guerra dos Blocos",
+
+  description:
+    "Uma guerra internacional chegou ao Brasil. O governo precisa escolher aliados e organizar a defesa.",
 
   choices: []
 },

@@ -15,6 +15,13 @@ export function checkEnding(gameState) {
     return forcedEnding;
   }
 }
+
+if (
+  gameState.flags
+    ?.foreignOccupation
+) {
+  return ENDINGS.foreignOccupation;
+}
   
   if (gameState.indicators.people <= 0) {
     return ENDINGS.popularRevolt;

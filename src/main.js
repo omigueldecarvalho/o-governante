@@ -118,6 +118,17 @@ import {
   renderFlagDesigner
 } from "./ui/flag-designer.js";
 
+import {
+  renderReligionQuiz
+} from "./ui/religion-quiz.js";
+
+import {
+  renderTigrinhoGame
+} from "./ui/tigrinho-game.js";
+
+import {
+  renderWarGame
+} from "./ui/war-game.js";
 
 let gameState = null;
 let currentDecision = null;
@@ -245,7 +256,9 @@ function showGovernmentScreen() {
 }
 
 function showNextDecision() {
-  const ending = checkEnding(gameState);
+  const ending = checkEnding(
+    gameState
+  );
 
   if (ending) {
     showEnding(ending);
@@ -258,151 +271,241 @@ function showNextDecision() {
   );
 
   if (!currentDecision) {
-    showEnding(ENDINGS.prototypeCompleted);
+    showEnding(
+      ENDINGS.prototypeCompleted
+    );
+
     return;
   }
 
-  if (currentDecision.type === "law") {
-  renderLawScreen({
-    gameState,
-    decision: currentDecision,
-    onChoice: handleChoice
-  });
+  /*
+   * Sabatina religiosa
+   */
+  if (
+    currentDecision.type ===
+    "religion-quiz"
+  ) {
+    renderReligionQuiz({
+      gameState,
+      decision: currentDecision,
 
-  return;
-}
+      onComplete: ({
+        choice,
+        religion
+      }) => {
+        gameState.player.religion =
+          religion;
 
-if (
+        saveGame(gameState);
+        handleChoice(choice);
+      }
+    });
+
+    return;
+  }
+
+  /*
+   * Criação de leis
+   */
+  if (
+    currentDecision.type === "law"
+  ) {
+    renderLawScreen({
+      gameState,
+      decision: currentDecision,
+      onChoice: handleChoice
+    });
+
+    return;
+  }
+
+  /*
+   * Entrevista coletiva
+   */
+  if (
+    currentDecision.type ===
+    "press-conference"
+  ) {
+    renderPressConference({
+      gameState,
+      decision: currentDecision,
+      onComplete: handleChoice
+    });
+
+    return;
+  }
+
+  /*
+   * Orçamento nacional
+   */
+  if (
+    currentDecision.type === "budget"
+  ) {
+    renderBudgetScreen({
+      gameState,
+      decision: currentDecision,
+      onComplete: handleChoice
+    });
+
+    return;
+  }
+
+  /*
+   * Escolha de ministros
+   */
+  if (
+    currentDecision.type === "cabinet"
+  ) {
+    renderCabinetScreen({
+      gameState,
+      decision: currentDecision,
+      onComplete: handleChoice
+    });
+
+    return;
+  }
+
+  /*
+   * Invasão estrangeira
+   */
+  if (
+    currentDecision.type === "invasion"
+  ) {
+    renderInvasionGame({
+      gameState,
+      decision: currentDecision,
+      onComplete: handleChoice
+    });
+
+    return;
+  }
+
+  /*
+   * Operação Abafa
+   */
+  if (
+    currentDecision.type === "cover-up"
+  ) {
+    renderCoverUpGame({
+      gameState,
+      decision: currentDecision,
+      onComplete: handleChoice
+    });
+
+    return;
+  }
+
+  /*
+   * Compra de votos
+   */
+  if (
+    currentDecision.type ===
+    "congress-vote"
+  ) {
+    renderCongressVoteGame({
+      gameState,
+      decision: currentDecision,
+      onComplete: handleChoice
+    });
+
+    return;
+  }
+
+  /*
+   * Apaga-incêndio
+   */
+  if (
+    currentDecision.type ===
+    "crisis-firefighter"
+  ) {
+    renderCrisisFirefighterGame({
+      gameState,
+      decision: currentDecision,
+      onComplete: handleChoice
+    });
+
+    return;
+  }
+
+  /*
+   * Leilão das privatizações
+   */
+  if (
+    currentDecision.type ===
+    "privatization-auction"
+  ) {
+    renderPrivatizationAuction({
+      gameState,
+      decision: currentDecision,
+      onComplete: handleChoice
+    });
+
+    return;
+  }
+
+  /*
+   * Criação da bandeira
+   */
+  if (
+    currentDecision.type ===
+    "flag-designer"
+  ) {
+    renderFlagDesigner({
+      gameState,
+      decision: currentDecision,
+
+      onComplete: ({
+        choice,
+        flag
+      }) => {
+        gameState.country ??= {};
+
+        if (flag !== undefined) {
+          gameState.country.flag =
+            flag;
+        }
+
+        saveGame(gameState);
+        handleChoice(choice);
+      }
+    });
+
+    return;
+  }
+
+  /*
+   * Tigrinho do Planalto
+   */
+  if (
+    currentDecision.type ===
+    "tigrinho"
+  ) {
+    renderTigrinhoGame({
+      gameState,
+      decision: currentDecision,
+      onComplete: handleChoice
+    });
+
+    return;
+  }
+
+  if (
   currentDecision.type ===
-  "press-conference"
+  "war-game"
 ) {
-  renderPressConference({
-    gameState,
-    decision: currentDecision,
-    onComplete: handleChoice
-  });
-
-  return;
-}
-
-if (currentDecision.type === "law") {
-  renderLawScreen({
-    gameState,
-    decision: currentDecision,
-    onChoice: handleChoice
-  });
-
-  return;
-}
-
-if (
-  currentDecision.type ===
-  "press-conference"
-) {
-  renderPressConference({
-    gameState,
-    decision: currentDecision,
-    onComplete: handleChoice
-  });
-
-  return;
-}
-
-if (currentDecision.type === "budget") {
-  renderBudgetScreen({
-    gameState,
-    decision: currentDecision,
-    onComplete: handleChoice
-  });
-
-  return;
-}
-
-if (currentDecision.type === "cabinet") {
-  renderCabinetScreen({
-    gameState,
-    decision: currentDecision,
-    onComplete: handleChoice
-  });
-
-  return;
-}
-
-if (currentDecision.type === "invasion") {
-  renderInvasionGame({
-    gameState,
-    decision: currentDecision,
-    onComplete: handleChoice
-  });
-
-  return;
-}
-
-if (
-  currentDecision.type === "cover-up"
-) {
-  renderCoverUpGame({
-    gameState,
-    decision: currentDecision,
-    onComplete: handleChoice
-  });
-
-  return;
-}
-
-if (
-  currentDecision.type ===
-  "congress-vote"
-) {
-  renderCongressVoteGame({
-    gameState,
-    decision: currentDecision,
-    onComplete: handleChoice
-  });
-
-  return;
-}
-
-if (
-  currentDecision.type ===
-  "crisis-firefighter"
-) {
-  renderCrisisFirefighterGame({
-    gameState,
-    decision: currentDecision,
-    onComplete: handleChoice
-  });
-
-  return;
-}
-
-if (
-  currentDecision.type ===
-  "privatization-auction"
-) {
-  renderPrivatizationAuction({
-    gameState,
-    decision: currentDecision,
-    onComplete: handleChoice
-  });
-
-  return;
-}
-
-if (
-  currentDecision.type ===
-  "flag-designer"
-) {
-  renderFlagDesigner({
+  renderWarGame({
     gameState,
     decision: currentDecision,
 
-    onComplete: ({
-      choice,
-      flag
-    }) => {
-      if (flag !== undefined) {
-        gameState.country.flag = flag;
+    onComplete: (choice) => {
+      gameState.flags ??= {};
+
+      if (
+        choice.metadata
+          ?.war?.occupied
+      ) {
+        gameState.flags
+          .foreignOccupation = true;
       }
 
       saveGame(gameState);
@@ -413,13 +516,16 @@ if (
   return;
 }
 
-
-renderDecisionScreen({
-  gameState,
-  decision: currentDecision,
-  onChoice: handleChoice
-});
+  /*
+   * Decisão comum
+   */
+  renderDecisionScreen({
+    gameState,
+    decision: currentDecision,
+    onChoice: handleChoice
+  });
 }
+
 
 function handleChoice(choice) {
   const selectedDecision =

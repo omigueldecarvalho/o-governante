@@ -82,5 +82,15 @@ midtermElectionDefeat: {
     "A população antecipou o fim do seu governo. Seus pertences foram colocados em caixas antes mesmo do encerramento da apuração."
 },
 
+foreignOccupation: {
+  id: "foreign-occupation",
+  icon: "🏴",
+  title: "O país foi ocupado",
+
+  description:
+    "As forças invasoras tomaram os centros de poder. Seu governo terminou junto com a soberania nacional.",
+
+  tone: "defeat"
+},
 
 };
