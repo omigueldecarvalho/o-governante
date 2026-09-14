@@ -53,5 +53,34 @@ export const ENDINGS = {
     title: "Protótipo concluído",
     description:
       "Você tomou todas as decisões disponíveis nesta versão inicial de O Governante."
-  }
+  },
+
+foreignOccupation: {
+  id: "foreign-occupation",
+  icon: "🏳️",
+  title: "O país foi ocupado",
+
+  description:
+    "As forças de Trampi tomaram o território, e Bolsocloro foi nomeado governador provisório. Seu mandato terminou por falta de país para governar."
+},
+
+initialElectionDefeat: {
+  id: "initial-election-defeat",
+  icon: "🗳️",
+  title: "O povo escolheu outro",
+
+  description:
+    "Sua campanha terminou em derrota. Você ainda exigiu uma recontagem, mas até sua equipe reconheceu o resultado."
+},
+
+midtermElectionDefeat: {
+  id: "midterm-election-defeat",
+  icon: "📦",
+  title: "Mudança no Palácio",
+
+  description:
+    "A população antecipou o fim do seu governo. Seus pertences foram colocados em caixas antes mesmo do encerramento da apuração."
+},
+
+
 };

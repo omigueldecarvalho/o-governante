@@ -36,7 +36,9 @@ export function createInitialGameState(playerData) {
     partyName: playerData.partyName,
     partyAcronym: playerData.partyAcronym,
     initialIdeology: ideology.id,
-    personalWealth: base.personalWealth
+    personalWealth: base.personalWealth,
+    candidateNumber: playerData.candidateNumber,
+    footballTeam: null,
   },
 
     indicators: {
@@ -94,6 +96,9 @@ export function createInitialGameState(playerData) {
     history: [],
     pendingConsequences: [],
     usedDecisionIds: [],
+    shownAnnualReports: [],
+    electionsCompleted: [],
+    campaignHistory: [],
     finished: false,
     ending: null
   };

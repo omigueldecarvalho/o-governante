@@ -1,6 +1,10 @@
 import { IDEOLOGIES } from "../config/ideologies.js";
 
 import {
+  renderNationalFlag
+} from "./national-flag.js";
+
+import {
   calculateFinalIdeology,
   calculatePoliticalCoherence,
   generateEpithet,
@@ -54,6 +58,65 @@ export function renderEndingScreen({
 
     return;
   }
+
+  if (
+  ending.id === "initial-election-defeat"
+) {
+  app.innerHTML = `
+    <section class="screen ending-screen">
+      <div class="ending-icon">
+        ${ending.icon}
+      </div>
+
+      <p class="eyebrow">
+        Fim da campanha
+      </p>
+
+     <h1>${ending.title}</h1>
+
+${renderNationalFlag(
+  gameState.country?.flag,
+  "ending"
+)}
+
+<p class="ending-description">
+  ${ending.description}
+</p>
+
+      <button
+        type="button"
+        class="primary-button"
+        id="restart-after-ending"
+      >
+        Tentar outra eleição
+      </button>
+
+      <button
+        type="button"
+        class="secondary-button"
+        id="return-home"
+      >
+        Voltar à tela inicial
+      </button>
+    </section>
+  `;
+
+  document
+    .querySelector("#restart-after-ending")
+    ?.addEventListener(
+      "click",
+      onRestart
+    );
+
+  document
+    .querySelector("#return-home")
+    ?.addEventListener(
+      "click",
+      onHome
+    );
+
+  return;
+}
 
   const finalIdeology =
     calculateFinalIdeology(gameState);

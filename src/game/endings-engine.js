@@ -2,6 +2,20 @@ import { GAME_CONFIG } from "../config/game-config.js";
 import { ENDINGS } from "../data/endings.js";
 
 export function checkEnding(gameState) {
+
+  if (gameState.forcedEnding) {
+  const forcedEnding = Object.values(
+    ENDINGS
+  ).find(
+    (ending) =>
+      ending.id === gameState.forcedEnding
+  );
+
+  if (forcedEnding) {
+    return forcedEnding;
+  }
+}
+  
   if (gameState.indicators.people <= 0) {
     return ENDINGS.popularRevolt;
   }

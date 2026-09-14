@@ -190,12 +190,18 @@ export function renderChoiceResult({
     </section>
   `;
 
-  const continueButton = document.querySelector(
+ const continueButton =
+  document.querySelector(
     "#continue-after-result"
   );
 
+if (
+  continueButton &&
+  typeof onContinue === "function"
+) {
   continueButton.addEventListener(
     "click",
     onContinue
   );
+}
 }

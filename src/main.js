@@ -66,6 +66,59 @@ import {
   renderEndingScreen
 } from "./ui/ending-screen.js";
 
+import {
+  renderBudgetScreen
+} from "./ui/budget-screen.js";
+
+import {
+  renderCabinetScreen
+} from "./ui/cabinet-screen.js";
+
+import {
+  renderInvasionGame
+} from "./ui/invasion-game.js";
+
+import {
+  renderAnnualReport
+} from "./ui/annual-report.js";
+
+import {
+  renderElectionFlow
+} from "./ui/election-flow.js";
+
+import {
+  applyCampaignChoice
+} from "./game/campaign-engine.js";
+
+import {
+  renderFootballTeamScreen
+} from "./ui/football-team-screen.js";
+
+import {
+  renderCoverUpGame
+} from "./ui/cover-up-game.js";
+
+import {
+  renderCongressVoteGame
+} from "./ui/congress-vote-game.js";
+
+import {
+  renderCrisisFirefighterGame
+} from "./ui/crisis-firefighter-game.js";
+
+import {
+  renderPrivatizationAuction
+} from "./ui/privatization-auction-game.js";
+
+import {
+  renderClandestinePrintShop
+} from "./ui/clandestine-print-shop.js";
+
+import {
+  renderFlagDesigner
+} from "./ui/flag-designer.js";
+
+
 let gameState = null;
 let currentDecision = null;
 
@@ -116,7 +169,7 @@ function startGame(playerData) {
       gameState
     );
 
-    showGovernmentScreen();
+    showFootballTeamSelection();
   } catch (error) {
     console.error(
       "Erro completo ao iniciar partida:",
@@ -133,6 +186,22 @@ function startGame(playerData) {
 
 function resumeGame() {
   const savedGame = loadGame();
+
+  if (!gameState.player.footballTeam) {
+  showFootballTeamSelection();
+  return;
+}
+
+  const initialElectionCompleted =
+  gameState.electionsCompleted?.some(
+    (election) =>
+      election.type === "initial"
+  );
+
+if (!initialElectionCompleted) {
+  startElection("initial");
+  return;
+}
 
   if (!savedGame) {
     window.alert(
@@ -216,6 +285,135 @@ if (
   return;
 }
 
+if (currentDecision.type === "law") {
+  renderLawScreen({
+    gameState,
+    decision: currentDecision,
+    onChoice: handleChoice
+  });
+
+  return;
+}
+
+if (
+  currentDecision.type ===
+  "press-conference"
+) {
+  renderPressConference({
+    gameState,
+    decision: currentDecision,
+    onComplete: handleChoice
+  });
+
+  return;
+}
+
+if (currentDecision.type === "budget") {
+  renderBudgetScreen({
+    gameState,
+    decision: currentDecision,
+    onComplete: handleChoice
+  });
+
+  return;
+}
+
+if (currentDecision.type === "cabinet") {
+  renderCabinetScreen({
+    gameState,
+    decision: currentDecision,
+    onComplete: handleChoice
+  });
+
+  return;
+}
+
+if (currentDecision.type === "invasion") {
+  renderInvasionGame({
+    gameState,
+    decision: currentDecision,
+    onComplete: handleChoice
+  });
+
+  return;
+}
+
+if (
+  currentDecision.type === "cover-up"
+) {
+  renderCoverUpGame({
+    gameState,
+    decision: currentDecision,
+    onComplete: handleChoice
+  });
+
+  return;
+}
+
+if (
+  currentDecision.type ===
+  "congress-vote"
+) {
+  renderCongressVoteGame({
+    gameState,
+    decision: currentDecision,
+    onComplete: handleChoice
+  });
+
+  return;
+}
+
+if (
+  currentDecision.type ===
+  "crisis-firefighter"
+) {
+  renderCrisisFirefighterGame({
+    gameState,
+    decision: currentDecision,
+    onComplete: handleChoice
+  });
+
+  return;
+}
+
+if (
+  currentDecision.type ===
+  "privatization-auction"
+) {
+  renderPrivatizationAuction({
+    gameState,
+    decision: currentDecision,
+    onComplete: handleChoice
+  });
+
+  return;
+}
+
+if (
+  currentDecision.type ===
+  "flag-designer"
+) {
+  renderFlagDesigner({
+    gameState,
+    decision: currentDecision,
+
+    onComplete: ({
+      choice,
+      flag
+    }) => {
+      if (flag !== undefined) {
+        gameState.country.flag = flag;
+      }
+
+      saveGame(gameState);
+      handleChoice(choice);
+    }
+  });
+
+  return;
+}
+
+
 renderDecisionScreen({
   gameState,
   decision: currentDecision,
@@ -224,7 +422,8 @@ renderDecisionScreen({
 }
 
 function handleChoice(choice) {
-  const selectedDecision = currentDecision;
+  const selectedDecision =
+    currentDecision;
 
   gameState = applyChoice(
     gameState,
@@ -234,8 +433,15 @@ function handleChoice(choice) {
 
   saveGame(gameState);
 
-  console.log("Decisão tomada:", choice);
-  console.log("Estado atualizado:", gameState);
+  console.log(
+    "Decisão tomada:",
+    choice
+  );
+
+  console.log(
+    "Estado atualizado:",
+    gameState
+  );
 
   renderChoiceResult({
     decision: selectedDecision,
@@ -256,12 +462,11 @@ function processPendingConsequences() {
     return;
   }
 
-  const consequence = getDueConsequence(
-    gameState
-  );
+  const consequence =
+    getDueConsequence(gameState);
 
   if (!consequence) {
-    showNextDecision();
+    processAnnualReport();
     return;
   }
 
@@ -272,28 +477,35 @@ function processPendingConsequences() {
 
   saveGame(gameState);
 
-  console.log(
-    "Consequência aplicada:",
-    consequence
-  );
-
   renderConsequenceScreen({
     consequence,
     gameState,
 
-    onContinue: processPendingConsequences
+    onContinue: () => {
+      processPendingConsequences();
+    }
   });
 }
 
-function showEnding(ending, updateState = true) {
+function showEnding(
+  ending,
+  updateState = true
+) {
   if (updateState) {
     gameState = finishGame(
       gameState,
       ending
     );
 
-    saveGame(gameState);
-    archiveGovernment(gameState);
+    if (
+      ending.id ===
+      "initial-election-defeat"
+    ) {
+      clearSavedGame();
+    } else {
+      saveGame(gameState);
+      archiveGovernment(gameState);
+    }
   }
 
   renderEndingScreen({
@@ -349,4 +561,168 @@ function handleClearHistory() {
 
   clearGovernmentHistory();
   showGovernmentHistory();
+}
+
+function processAnnualReport() {
+  if (
+    !Array.isArray(
+      gameState.shownAnnualReports
+    )
+  ) {
+    gameState.shownAnnualReports = [];
+  }
+
+  const decisionsTaken =
+    gameState.government.decisionsTaken;
+
+  const completedYear =
+    decisionsTaken / 12;
+
+  const mustShowReport =
+    decisionsTaken > 0 &&
+    decisionsTaken % 12 === 0 &&
+    !gameState.shownAnnualReports.includes(
+      completedYear
+    );
+
+  if (!mustShowReport) {
+    processIntermediateElection();
+    return;
+  }
+
+  gameState.shownAnnualReports.push(
+    completedYear
+  );
+
+  saveGame(gameState);
+
+  renderAnnualReport({
+    gameState,
+    year: completedYear,
+
+    onContinue: () => {
+      processIntermediateElection();
+    }
+  });
+}
+
+function startElection(electionType) {
+  renderClandestinePrintShop({
+    electionType,
+
+    onComplete: (campaignResult) => {
+      gameState = applyCampaignChoice({
+        currentGameState: gameState,
+
+        choice: {
+          id: campaignResult.id,
+          name: campaignResult.name,
+          effects: campaignResult.effects
+        },
+
+        type:
+          `print-shop-${electionType}`
+      });
+
+      saveGame(gameState);
+
+      renderElectionFlow({
+        gameState,
+        electionType,
+
+        campaignBonus:
+          campaignResult.voteBonus,
+
+        onComplete: (result) => {
+          if (
+            !Array.isArray(
+              gameState.electionsCompleted
+            )
+          ) {
+            gameState.electionsCompleted = [];
+          }
+
+          gameState.electionsCompleted.push({
+            ...result,
+
+            printShop:
+              campaignResult.printShop,
+
+            decisionNumber:
+              gameState.government
+                .decisionsTaken
+          });
+
+          saveGame(gameState);
+
+          if (!result.won) {
+            const ending =
+              electionType === "initial"
+                ? ENDINGS.initialElectionDefeat
+                : ENDINGS.midtermElectionDefeat;
+
+            showEnding(ending);
+            return;
+          }
+
+          if (electionType === "initial") {
+            showGovernmentScreen();
+            return;
+          }
+
+          processPendingConsequences();
+        }
+      });
+    }
+  });
+}
+
+function processIntermediateElection() {
+  if (
+    !Array.isArray(
+      gameState.electionsCompleted
+    )
+  ) {
+    gameState.electionsCompleted = [];
+  }
+
+  const alreadyCompleted =
+    gameState.electionsCompleted.some(
+      (election) =>
+        election.type ===
+        "intermediate"
+    );
+
+  const mustHoldElection =
+    gameState.government
+      .decisionsTaken >= 24 &&
+    !alreadyCompleted;
+
+  if (mustHoldElection) {
+    startElection("intermediate");
+    return;
+  }
+
+  showNextDecision();
+}
+
+function showFootballTeamSelection() {
+  renderFootballTeamScreen({
+    onComplete: (team) => {
+      gameState = applyCampaignChoice({
+        currentGameState: gameState,
+        choice: team,
+        type: "football-team"
+      });
+
+      saveGame(gameState);
+
+      console.log(
+        "Time escolhido:",
+        gameState.player.footballTeam
+      );
+
+      startElection("initial");
+    }
+  });
 }

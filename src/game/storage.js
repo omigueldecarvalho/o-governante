@@ -117,7 +117,8 @@ export function archiveGovernment(gameState) {
       },
 
       corruption: gameState.corruption,
-      ending: gameState.ending,
+      ending: gameState.ending, 
+      flag: gameState.country?.flag ?? null,
 
       government: {
         year: gameState.government.year,

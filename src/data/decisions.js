@@ -738,6 +738,12 @@ const BASE_DECISIONS = [
   type: "law",
   category: "Lei presidencial",
 
+requirements: {
+  minimumDecisions: 3
+},
+
+weight: 5,
+
   character: {
     name: "Beatriz Vasconcelos",
     role: "Ministra-Chefe da Casa Civil"
@@ -904,6 +910,16 @@ const BASE_DECISIONS = [
   id: "presidential-press-conference",
   type: "press-conference",
   category: "Imprensa",
+
+  requirements: {
+  minimumDecisions: 2
+},
+
+repeatable: true,
+cooldown: 6,
+maximumOccurrences: 4,
+weight: 7,
+
 
   character: {
     name: "Coletiva nacional",
@@ -1257,7 +1273,465 @@ const BASE_DECISIONS = [
       ]
     }
   ]
-}
+},
+
+{
+  id: "national-budget",
+  type: "budget",
+  category: "Economia",
+
+requirements: {
+  minimumDecisions: 2
+},
+
+repeatable: true,
+cooldown: 10,
+maximumOccurrences: 4,
+weight: 8,
+
+
+  character: {
+    name: "Cláudio Menezes",
+    role: "Ministro da Fazenda"
+  },
+
+  title: "O orçamento nacional",
+
+  description:
+    "O governo possui recursos limitados. Distribua 100 pontos entre as áreas antes de enviar o orçamento ao Congresso.",
+
+  choices: []
+},
+
+{
+  id: "cabinet-formation",
+  type: "cabinet",
+  category: "Governo",
+
+  requirements: {
+    exactDecision: 0
+  },
+
+  weight: 100,
+
+  title: "Monte seu ministério",
+
+  description:
+    "Escolha três nomes para ocupar os cargos mais importantes do governo.",
+
+  choices: [],
+
+  candidates: [
+    {
+      id: "economist",
+      name: "Arthur Mercado",
+      role: "Economista liberal",
+      icon: "📊",
+
+      description:
+        "Promete controlar gastos, privatizar empresas e conquistar investidores.",
+
+      effects: {
+        indicators: {
+          people: -3,
+          congress: 3,
+          economy: 10,
+          stability: 2
+        },
+
+        politics: {
+          economicPosition: 15,
+          socialPosition: 0,
+          authoritarianism: 0,
+          popularParticipation: -3,
+          personalism: 0
+        },
+
+        factions: {
+          business: 15,
+          unions: -10,
+          socialMovements: -5
+        },
+
+        country: {
+          inequality: 5,
+          publicServices: -3
+        },
+
+        corruption: 0,
+        personalWealth: 0
+      }
+    },
+
+    {
+      id: "union-leader",
+      name: "Joana Operária",
+      role: "Líder sindical",
+      icon: "✊",
+
+      description:
+        "Defende trabalhadores, aumento de salários e fortalecimento dos serviços públicos.",
+
+      effects: {
+        indicators: {
+          people: 10,
+          congress: -5,
+          economy: -4,
+          stability: 3
+        },
+
+        politics: {
+          economicPosition: -15,
+          socialPosition: -5,
+          authoritarianism: 0,
+          popularParticipation: 12,
+          personalism: 0
+        },
+
+        factions: {
+          business: -12,
+          unions: 18,
+          socialMovements: 10
+        },
+
+        country: {
+          inequality: -6,
+          publicServices: 5
+        },
+
+        corruption: 0,
+        personalWealth: 0
+      }
+    },
+
+    {
+      id: "general",
+      name: "General Braga Forte",
+      role: "Comandante militar",
+      icon: "🎖️",
+
+      description:
+        "Promete disciplina, segurança e absoluta lealdade enquanto tudo estiver sob controle.",
+
+      effects: {
+        indicators: {
+          people: -3,
+          congress: 2,
+          economy: -2,
+          stability: -5
+        },
+
+        politics: {
+          economicPosition: 3,
+          socialPosition: 10,
+          authoritarianism: 18,
+          popularParticipation: -12,
+          personalism: 5
+        },
+
+        factions: {
+          military: 20,
+          business: 5,
+          unions: -8,
+          socialMovements: -10
+        },
+
+        country: {},
+
+        corruption: 2,
+        personalWealth: 0
+      }
+    },
+
+    {
+      id: "religious-leader",
+      name: "Pastor Josué da Nação",
+      role: "Líder religioso",
+      icon: "🙏",
+
+      description:
+        "Possui milhões de seguidores e garante conseguir votos importantes no Congresso.",
+
+      effects: {
+        indicators: {
+          people: 4,
+          congress: 8,
+          economy: 0,
+          stability: -2
+        },
+
+        politics: {
+          economicPosition: 3,
+          socialPosition: 15,
+          authoritarianism: 5,
+          popularParticipation: -3,
+          personalism: 8
+        },
+
+        factions: {
+          religiousGroups: 20,
+          socialMovements: -8,
+          press: -3
+        },
+
+        country: {},
+
+        corruption: 3,
+        personalWealth: 0
+      }
+    },
+
+    {
+      id: "party-boss",
+      name: "Valdemar Tradição",
+      role: "Cacique partidário",
+      icon: "🤝",
+
+      description:
+        "Conhece o Congresso como ninguém e garante aprovar qualquer projeto por um preço justo.",
+
+      effects: {
+        indicators: {
+          people: -6,
+          congress: 16,
+          economy: 2,
+          stability: 5
+        },
+
+        politics: {
+          economicPosition: 5,
+          socialPosition: 0,
+          authoritarianism: 3,
+          popularParticipation: -8,
+          personalism: 12
+        },
+
+        factions: {
+          business: 5,
+          press: -8
+        },
+
+        country: {
+          inequality: 2,
+          publicServices: -3
+        },
+
+        corruption: 15,
+        personalWealth: 500000
+      }
+    },
+
+    {
+      id: "scientist",
+      name: "Dra. Márcia Ciência",
+      role: "Pesquisadora e médica",
+      icon: "🔬",
+
+      description:
+        "Defende decisões técnicas, investimentos em saúde, educação e pesquisa científica.",
+
+      effects: {
+        indicators: {
+          people: 7,
+          congress: -4,
+          economy: -3,
+          stability: 6
+        },
+
+        politics: {
+          economicPosition: -7,
+          socialPosition: -10,
+          authoritarianism: -5,
+          popularParticipation: 5,
+          personalism: -5
+        },
+
+        factions: {
+          business: -2,
+          unions: 4,
+          socialMovements: 7,
+          press: 10
+        },
+
+        country: {
+          inequality: -3,
+          publicServices: 10
+        },
+
+        corruption: -5,
+        personalWealth: 0
+      }
+    }
+  ]
+},
+
+{
+  id: "foreign-invasion",
+  type: "invasion",
+  category: "Defesa nacional",
+
+  character: {
+    name: "General Braga Forte",
+    role: "Comandante das Forças Armadas"
+  },
+
+  title: "O Brasil está sendo invadido",
+
+  description:
+    "Trampi iniciou uma invasão com o apoio de Bolsocloro. Localize as bases inimigas antes que o território seja ocupado.",
+
+  choices: [],
+
+  requirements: {
+    minimumDecisions: 8,
+
+    indicators: {
+      stability: {
+        maximum: 55
+      }
+    },
+
+    politics: {
+      personalism: {
+        minimum: 10
+      }
+    }
+  },
+
+  weight: 20
+},
+
+{
+  id: "operation-cover-up",
+  type: "cover-up",
+  category: "Crise política",
+
+  character: {
+    name: "Chefe do Gabinete",
+    role: "Funcionário assustado"
+  },
+
+  title: "Operação Abafa",
+
+  description:
+    "Uma investigação começou. Decida rapidamente o destino das provas antes que a polícia chegue.",
+
+  choices: [],
+
+  requirements: {
+    minimumDecisions: 4,
+
+    corruption: {
+      minimum: 15
+    }
+  },
+
+  weight: 20
+},
+
+{
+  id: "congress-vote-buying",
+  type: "congress-vote",
+  category: "Congresso",
+
+  character: {
+    name: "Valdemar Tradição",
+    role: "Articulador político"
+  },
+
+  title: "A votação decisiva",
+
+  description:
+    "Seu projeto precisa de 308 votos. Convença os blocos antes da votação começar.",
+
+  choices: [],
+
+  requirements: {
+    minimumDecisions: 5,
+
+    indicators: {
+      congress: {
+        maximum: 65
+      }
+    }
+  },
+
+  weight: 18
+},
+
+{
+  id: "national-crisis-firefighter",
+  type: "crisis-firefighter",
+  category: "Crise nacional",
+
+  character: {
+    name: "Gabinete de Crise",
+    role: "Palácio presidencial"
+  },
+
+  title: "Apaga-incêndio",
+
+  description:
+    "Crises estão surgindo pelo país. Escolha rapidamente a resposta correta para cada emergência.",
+
+  choices: [],
+
+  requirements: {
+    minimumDecisions: 6
+  },
+
+  repeatable: true,
+  cooldown: 10,
+  maximumOccurrences: 4,
+  weight: 14
+},
+
+{
+  id: "privatization-auction",
+  type: "privatization-auction",
+  category: "Economia",
+
+  character: {
+    name: "Arthur Mercado",
+    role: "Ministro da Economia"
+  },
+
+  title: "Leilão das Privatizações",
+
+  description:
+    "Empresas públicas serão colocadas à venda. Analise as ofertas antes que os compradores desistam.",
+
+  choices: [],
+
+  requirements: {
+    minimumDecisions: 7
+  },
+
+  weight: 12
+},
+
+{
+  id: "new-national-flag",
+  type: "flag-designer",
+  category: "cultura",
+  weight: 3,
+
+  requirements: {
+  minimumDecisions: 5
+},
+
+  character: {
+    name: "Nando Rabisco",
+    role: "Secretário de Identidade Nacional"
+  },
+
+  title: "Uma nova cara para a nação",
+
+  description:
+    "O governo pode manter a bandeira atual ou criar um novo símbolo nacional.",
+
+  choices: []
+},
 
 ];
 

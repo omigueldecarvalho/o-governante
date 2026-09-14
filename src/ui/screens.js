@@ -1,6 +1,10 @@
 import { GAME_CONFIG } from "../config/game-config.js";
 import { IDEOLOGIES } from "../config/ideologies.js";
 
+import {
+  renderNationalFlag
+} from "./national-flag.js";
+
 function escapeHTML(value) {
   const element = document.createElement("div");
   element.textContent = value;
@@ -200,6 +204,23 @@ export function renderCreateLeaderScreen({
         </div>
 
         <div class="form-group">
+          <label for="candidate-number">
+            Número do candidato
+          </label>
+
+          <input
+            type="text"
+            id="candidate-number"
+            name="candidateNumber"
+            placeholder="Ex.: 13"
+            inputmode="numeric"
+            pattern="[0-9]{2}"
+            maxlength="2"
+            required
+          />
+        </div>
+
+        <div class="form-group">
           <label for="ideology">
             Posição política
           </label>
@@ -235,41 +256,98 @@ export function renderCreateLeaderScreen({
     </section>
   `;
 
-  const form = document.querySelector("#leader-form");
-  const ideologySelect = document.querySelector("#ideology");
+  const form = document.querySelector(
+    "#leader-form"
+  );
+
+  const ideologySelect =
+    document.querySelector("#ideology");
+
   const description = document.querySelector(
     "#ideology-description"
   );
 
-  ideologySelect.addEventListener("change", (event) => {
-    const selectedIdeology = IDEOLOGIES.find(
-      (ideology) => ideology.id === event.target.value
+  const candidateNumberInput =
+    document.querySelector(
+      "#candidate-number"
     );
 
-    description.textContent = selectedIdeology
-      ? selectedIdeology.description
-      : "Selecione uma posição para visualizar suas características.";
-  });
+  candidateNumberInput?.addEventListener(
+    "input",
+    () => {
+      candidateNumberInput.value =
+        candidateNumberInput.value
+          .replace(/\D/g, "")
+          .slice(0, 2);
+    }
+  );
 
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
+  ideologySelect?.addEventListener(
+    "change",
+    (event) => {
+      const selectedIdeology =
+        IDEOLOGIES.find(
+          (ideology) =>
+            ideology.id ===
+            event.target.value
+        );
 
-    const formData = new FormData(form);
+      description.textContent =
+        selectedIdeology
+          ? selectedIdeology.description
+          : "Selecione uma posição para visualizar suas características.";
+    }
+  );
 
-    onSubmit({
-      name: formData.get("name").trim(),
-      partyName: formData.get("partyName").trim(),
-      partyAcronym: formData
-        .get("partyAcronym")
-        .trim()
-        .toUpperCase(),
-      ideology: formData.get("ideology")
-    });
-  });
+  form?.addEventListener(
+    "submit",
+    (event) => {
+      event.preventDefault();
+
+      const formData = new FormData(form);
+
+      const candidateNumber =
+        formData
+          .get("candidateNumber")
+          .trim();
+
+      if (!/^\d{2}$/.test(candidateNumber)) {
+        window.alert(
+          "O número do candidato deve possuir dois dígitos."
+        );
+
+        return;
+      }
+
+      onSubmit({
+        name:
+          formData.get("name").trim(),
+
+        partyName:
+          formData
+            .get("partyName")
+            .trim(),
+
+        partyAcronym:
+          formData
+            .get("partyAcronym")
+            .trim()
+            .toUpperCase(),
+
+        candidateNumber,
+
+        ideology:
+          formData.get("ideology")
+      });
+    }
+  );
 
   document
     .querySelector("#back-button")
-    .addEventListener("click", onBack);
+    ?.addEventListener(
+      "click",
+      onBack
+    );
 }
 
 export function renderGovernmentScreen(
@@ -317,6 +395,11 @@ export function renderGovernmentScreen(
           }
         </span>
       </div>
+
+      ${renderNationalFlag(
+  gameState.country?.flag,
+  "header"
+)}
 
       <div class="indicators-grid">
         ${createIndicator(

@@ -65,26 +65,259 @@ function advanceMonth(gameState) {
   }
 }
 
+
+function getDecisionHistory(
+  gameState,
+  decisionId
+) {
+  return gameState.history.filter(
+    (item) =>
+      item.type === "decision" &&
+      item.decisionId === decisionId
+  );
+}
+
+function meetsRange(value, rule) {
+  if (!rule) {
+    return true;
+  }
+
+  if (
+    typeof rule.minimum === "number" &&
+    value < rule.minimum
+  ) {
+    return false;
+  }
+
+  if (
+    typeof rule.maximum === "number" &&
+    value > rule.maximum
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function meetsGroupRequirements(
+  currentValues,
+  requirements = {}
+) {
+  return Object.entries(requirements).every(
+    ([key, rule]) => {
+      const currentValue =
+        currentValues[key] ?? 0;
+
+      return meetsRange(currentValue, rule);
+    }
+  );
+}
+
+function meetsRequirements(
+  gameState,
+  decision
+) {
+  const requirements =
+    decision.requirements ?? {};
+
+  const decisionsTaken =
+    gameState.government.decisionsTaken;
+
+  if (
+    typeof requirements.exactDecision ===
+      "number" &&
+    decisionsTaken !==
+      requirements.exactDecision
+  ) {
+    return false;
+  }
+
+  if (
+    typeof requirements.minimumDecisions ===
+      "number" &&
+    decisionsTaken <
+      requirements.minimumDecisions
+  ) {
+    return false;
+  }
+
+  if (
+    typeof requirements.maximumDecisions ===
+      "number" &&
+    decisionsTaken >
+      requirements.maximumDecisions
+  ) {
+    return false;
+  }
+
+  if (
+    !meetsGroupRequirements(
+      gameState.indicators,
+      requirements.indicators
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    !meetsGroupRequirements(
+      gameState.factions,
+      requirements.factions
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    !meetsGroupRequirements(
+      gameState.politicalProfile,
+      requirements.politics
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    requirements.corruption &&
+    !meetsRange(
+      gameState.corruption,
+      requirements.corruption
+    )
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function canUseDecision(
+  gameState,
+  decision
+) {
+  const uses = getDecisionHistory(
+    gameState,
+    decision.id
+  );
+
+  if (!decision.repeatable) {
+    return uses.length === 0;
+  }
+
+  if (
+    typeof decision.maximumOccurrences ===
+      "number" &&
+    uses.length >= decision.maximumOccurrences
+  ) {
+    return false;
+  }
+
+  if (
+    uses.length > 0 &&
+    typeof decision.cooldown === "number"
+  ) {
+    const lastUse = uses[uses.length - 1];
+
+    const decisionsSinceLastUse =
+      gameState.government.decisionsTaken -
+      lastUse.decisionNumber;
+
+    if (
+      decisionsSinceLastUse <
+      decision.cooldown
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function selectWeightedDecision(decisions) {
+  const totalWeight = decisions.reduce(
+    (total, decision) =>
+      total + (decision.weight ?? 1),
+    0
+  );
+
+  let randomValue =
+    Math.random() * totalWeight;
+
+  for (const decision of decisions) {
+    randomValue -= decision.weight ?? 1;
+
+    if (randomValue <= 0) {
+      return decision;
+    }
+  }
+
+  return decisions[decisions.length - 1];
+}
+
+
+
 export function getNextDecision(
   gameState,
   decisions
 ) {
-  const availableDecisions = decisions.filter(
-    (decision) =>
-      !gameState.usedDecisionIds.includes(
-        decision.id
-      )
+  const completedDecisions = Number(
+    gameState.government?.decisions ?? 0
   );
+
+  const nextDecisionNumber =
+    completedDecisions + 1;
+
+  /*
+   * Evento obrigatório da bandeira.
+   * Aparece na 5ª decisão ou na primeira
+   * oportunidade depois dela.
+   */
+  if (nextDecisionNumber >= 5) {
+    const flagDecision = decisions.find(
+      (decision) =>
+        decision.id ===
+        "new-national-flag"
+    );
+
+    const canShowFlag =
+      flagDecision &&
+      canUseDecision(
+        gameState,
+        flagDecision
+      ) &&
+      meetsRequirements(
+        gameState,
+        flagDecision
+      );
+
+    if (canShowFlag) {
+      return flagDecision;
+    }
+  }
+
+  /*
+   * Seleção normal dos demais eventos.
+   */
+  const availableDecisions =
+    decisions.filter((decision) => {
+      return (
+        canUseDecision(
+          gameState,
+          decision
+        ) &&
+        meetsRequirements(
+          gameState,
+          decision
+        )
+      );
+    });
 
   if (availableDecisions.length === 0) {
     return null;
   }
 
-  const randomIndex = Math.floor(
-    Math.random() * availableDecisions.length
+  return selectWeightedDecision(
+    availableDecisions
   );
-
-  return availableDecisions[randomIndex];
 }
 
 export function applyChoice(
@@ -156,11 +389,20 @@ export function applyChoice(
     });
   }
 
+if (choice.forcedEnding) {
+  gameState.forcedEnding =
+    choice.forcedEnding;
+}
+
+
 gameState.history.push({
   type: "decision",
 
   decisionId: decision.id,
   decisionTitle: decision.title,
+
+  decisionNumber:
+    gameState.government.decisionsTaken,
 
   choiceId: choice.id,
   choiceText: choice.text,
@@ -170,6 +412,41 @@ gameState.history.push({
         name: choice.law.name,
         reason: choice.law.reason
       }
+    : null,
+
+  budget: choice.budget
+    ? {
+        ...choice.budget
+      }
+    : null,
+
+  cabinet: choice.cabinet
+    ? structuredClone(choice.cabinet)
+    : null,
+
+    invasion: choice.invasion
+  ? structuredClone(choice.invasion)
+  : null,
+
+  coverUp: choice.coverUp
+  ? structuredClone(choice.coverUp)
+  : null,
+
+  congressVote: choice.congressVote
+  ? structuredClone(
+      choice.congressVote
+    )
+  : null,
+
+  crisisGame: choice.crisisGame
+  ? structuredClone(choice.crisisGame)
+  : null,
+
+  privatizationAuction:
+  choice.privatizationAuction
+    ? structuredClone(
+        choice.privatizationAuction
+      )
     : null,
 
   year: gameState.government.year,
