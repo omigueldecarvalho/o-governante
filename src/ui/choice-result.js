@@ -101,41 +101,62 @@ function createWealthEffect(value) {
 export function renderChoiceResult({
   decision,
   choice,
-  onContinue
+  gameState,
+  onContinue,
+  onOpenShop
 }) {
-  const app = document.querySelector("#app");
+  const app =
+    document.querySelector("#app");
 
   if (!choice) {
-    console.error("Escolha não recebida.");
+    console.error(
+      "Escolha não recebida."
+    );
 
     return;
   }
 
-  console.log("Resultado recebido:", choice);
-  console.log("resultText recebido:", choice.resultText);
+  const effects =
+    choice.effects ?? {};
 
-  const effects = choice.effects ?? {};
-  const indicatorEffects = effects.indicators ?? {};
+  const indicatorEffects =
+    effects.indicators ?? {};
 
-  const effectsHTML = Object.entries(
-    indicatorEffects
-  )
-    .map(([key, value]) => {
-      return createEffectItem(key, value);
-    })
-    .join("");
+  const effectsHTML =
+    Object.entries(
+      indicatorEffects
+    )
+      .map(([key, value]) => {
+        return createEffectItem(
+          key,
+          value
+        );
+      })
+      .join("");
 
-  const corruptionHTML = createCorruptionEffect(
-    effects.corruption
-  );
+  const corruptionHTML =
+    createCorruptionEffect(
+      effects.corruption
+    );
 
-  const wealthHTML = createWealthEffect(
-    effects.personalWealth
-  );
+  const wealthHTML =
+    createWealthEffect(
+      effects.personalWealth
+    );
 
   const resultText =
     choice.resultText ||
     "A decisão foi anunciada e o país começou a reagir.";
+
+  const salaryReceived = Number(
+    gameState?.government
+      ?.lastSalaryPayment ?? 0
+  );
+
+  const currentWealth = Number(
+    gameState?.player
+      ?.personalWealth ?? 0
+  );
 
   app.innerHTML = `
     <section class="screen result-screen">
@@ -143,19 +164,96 @@ export function renderChoiceResult({
         Consequência imediata
       </p>
 
-      <h1>${decision.title}</h1>
+      <h1>
+        ${decision.title}
+      </h1>
+
+      <section class="presidential-finance-bar">
+        <div class="finance-icon">
+          💰
+        </div>
+
+        <div class="finance-item">
+          <small>
+            Salário recebido
+          </small>
+
+          <strong>
+            ${salaryReceived.toLocaleString(
+              "pt-BR",
+              {
+                style: "currency",
+                currency: "BRL"
+              }
+            )}
+          </strong>
+        </div>
+
+        <div class="finance-item wealth">
+          <small>
+            Patrimônio atual
+          </small>
+
+          <strong>
+            ${currentWealth.toLocaleString(
+              "pt-BR",
+              {
+                style: "currency",
+                currency: "BRL"
+              }
+            )}
+          </strong>
+        </div>
+
+        ${
+          typeof onOpenShop ===
+          "function"
+            ? `
+              <button
+                type="button"
+                class="finance-shop-button"
+                id="open-presidential-shop"
+              >
+                <span>🛍️</span>
+
+                <div>
+                  <small>
+                    Usar patrimônio
+                  </small>
+
+                  <strong>
+                    Shopping
+                  </strong>
+                </div>
+              </button>
+            `
+            : ""
+        }
+      </section>
 
       <article class="selected-choice">
-        <small>Sua decisão</small>
-        <strong>${choice.text}</strong>
+        <small>
+          Sua decisão
+        </small>
+
+        <strong>
+          ${choice.text}
+        </strong>
       </article>
 
       <article class="result-message">
-        <span class="result-message-icon">📰</span>
+        <span class="result-message-icon">
+          📰
+        </span>
 
         <div>
-          <small>Reação do país</small>
-          <p>${resultText}</p>
+          <small>
+            Reação do país
+          </small>
+
+          <p>
+            ${resultText}
+          </p>
         </div>
       </article>
 
@@ -190,18 +288,35 @@ export function renderChoiceResult({
     </section>
   `;
 
- const continueButton =
-  document.querySelector(
-    "#continue-after-result"
-  );
+  const shopButton =
+    document.querySelector(
+      "#open-presidential-shop"
+    );
 
-if (
-  continueButton &&
-  typeof onContinue === "function"
-) {
-  continueButton.addEventListener(
-    "click",
-    onContinue
-  );
-}
+  if (
+    shopButton &&
+    typeof onOpenShop === "function"
+  ) {
+    shopButton.addEventListener(
+      "click",
+      () => {
+        onOpenShop();
+      }
+    );
+  }
+
+  const continueButton =
+    document.querySelector(
+      "#continue-after-result"
+    );
+
+  if (
+    continueButton &&
+    typeof onContinue === "function"
+  ) {
+    continueButton.addEventListener(
+      "click",
+      onContinue
+    );
+  }
 }

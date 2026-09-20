@@ -506,7 +506,7 @@ const BASE_DECISIONS = [
       {
         id: "accept-bribe",
         text: "Aceitar a proposta",
-
+          wealthSource: "illicit",
         resultText:
           "O valor foi transferido por meio de empresas no exterior. Publicamente, o governo anunciou uma nova parceria pela infraestrutura.",
 
@@ -1796,6 +1796,170 @@ weight: 8,
   choices: []
 },
 
+{
+  id: "money-suitcase",
+  type: "money-suitcase",
+  category: "corrupção",
+  weight: 5,
+
+  requirements: {
+    minimumDecisions: 6
+  },
+
+  character: {
+    name: "Valdemar Malote",
+    role: "Operador de assuntos financeiros"
+  },
+
+  title: "A mala esquecida",
+
+  description:
+    "Uma mala cheia de dinheiro apareceu no estacionamento do palácio. Ninguém parece saber quem é o dono.",
+
+  choices: []
+},
+
+{
+  id: "operation-peixe-vivo",
+  type: "jk-road-game",
+  category: "segurança",
+  weight: 7,
+
+  requirements: {
+    minimumDecisions: 10,
+
+    indicators: {
+      stability: {
+        minimum: 80
+      }
+    }
+  },
+
+  character: {
+    name: "Geraldo Volante",
+    role: "Chefe da Segurança Presidencial"
+  },
+
+  title: "Operação Peixe-Vivo",
+
+  description:
+    "Veículos desconhecidos foram vistos acompanhando o comboio presidencial. A viagem pode continuar ou ser cancelada.",
+
+  choices: []
+},
+
+{
+  id: "rushed-inauguration",
+  type: "rushed-inauguration",
+  category: "infraestrutura",
+  weight: 5,
+
+  requirements: {
+    minimumDecisions: 9
+  },
+
+  character: {
+    name: "Otávio Concreto",
+    role: "Ministro das Obras Visíveis"
+  },
+
+  title: "Inauguração às pressas",
+
+  description:
+    "A eleição se aproxima, mas a estrada até o novo hospital ainda termina no meio do mato.",
+
+  choices: []
+},
+
+{
+  id: "supreme-court-appointment",
+  type: "stf-appointment",
+  category: "justiça",
+
+  character: {
+    name: "Doutor Constitucionaldo",
+    role: "Assessor Jurídico do Governo"
+  },
+
+  title: "Uma vaga no Supremo",
+
+  description:
+    "Uma cadeira ficou vaga no STF. O governo deverá testar seus conhecimentos jurídicos e indicar um novo ministro.",
+
+  choices: []
+},
+{
+  id: "deepfake-monitoring-center",
+  type: "deepfake-center",
+  category: "communication",
+  weight: 4,
+
+  requirements: {
+    minimumDecisions: 6
+  },
+
+  character: {
+    name: "Vera Fato",
+    role:
+      "Diretora da Central de Verificação"
+  },
+
+  title: "Central do Deepfake",
+
+  description:
+    "Uma enxurrada de vídeos, declarações e processos tomou as redes. Sua equipe precisa separar fatos, distorções e montagens antes que tudo saia do controle.",
+
+  /*
+   * O minigame cria o resultado
+   * dinamicamente, mas o array precisa
+   * existir por causa da montagem final
+   * de DECISIONS.
+   */
+  choices: []
+},
+
+{
+  id: "little-shirt-tax",
+  type: "import-tax",
+  category: "economia",
+  weight: 5,
+
+  requirements: {
+    minimumDecisions: 7
+  },
+
+  character: {
+    name: "Fiscaldo Tributo",
+    role: "Secretário da Alfândega"
+  },
+
+  title: "Taxa das Blusinhas",
+
+  description:
+    "Milhares de encomendas chegaram ao país. Libere, taxe ou apreenda os pacotes antes que a esteira pare.",
+
+  choices: []
+},
+
+{
+  id: "patrimonial-investigation",
+  type: "patrimonial-investigation",
+  category: "justiça",
+  weight: 0,
+
+  character: {
+    name: "César Planilha",
+    role:
+      "Relator da Comissão de Investigação"
+  },
+
+  title: "A conta não fecha",
+
+  description:
+    "Jornalistas, auditores e parlamentares encontraram diferenças entre a renda presidencial e o patrimônio acumulado.",
+
+  choices: []
+}
 ];
 
 const POLITICAL_EFFECTS = {
@@ -1916,27 +2080,68 @@ const POLITICAL_EFFECTS = {
   }
 };
 
-export const DECISIONS = BASE_DECISIONS.map(
-  (decision) => ({
-    ...decision,
+const DEFAULT_POLITICAL_EFFECTS = {
+  economicPosition: 0,
+  socialPosition: 0,
+  authoritarianism: 0,
+  popularParticipation: 0,
+  personalism: 0
+};
 
-    choices: decision.choices.map((choice) => ({
-      ...choice,
+export const DECISIONS =
+  BASE_DECISIONS.map((decision) => {
+    /*
+     * Minigames podem não possuir
+     * escolhas tradicionais.
+     */
+    if (
+      !Array.isArray(decision.choices)
+    ) {
+      return {
+        ...decision,
+        choices: []
+      };
+    }
 
-      effects: {
-        ...choice.effects,
+    return {
+      ...decision,
 
-        politics:
-          POLITICAL_EFFECTS[decision.id]?.[
-            choice.id
-          ] ?? {
-            economicPosition: 0,
-            socialPosition: 0,
-            authoritarianism: 0,
-            popularParticipation: 0,
-            personalism: 0
-          }
-      }
-    }))
-  })
-);
+      choices: decision.choices.map(
+        (choice) => {
+          const registeredPolitics =
+            POLITICAL_EFFECTS[
+              decision.id
+            ]?.[choice.id] ?? {};
+
+          return {
+            ...choice,
+
+            effects: {
+              ...(choice.effects ?? {}),
+
+              politics: {
+                ...DEFAULT_POLITICAL_EFFECTS,
+
+                /*
+                 * Preserva efeitos políticos
+                 * declarados diretamente na
+                 * escolha.
+                 */
+                ...(
+                  choice.effects?.politics ??
+                  {}
+                ),
+
+                /*
+                 * Os valores cadastrados em
+                 * POLITICAL_EFFECTS têm
+                 * prioridade.
+                 */
+                ...registeredPolitics
+              }
+            }
+          };
+        }
+      )
+    };
+  });

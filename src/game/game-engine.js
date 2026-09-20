@@ -55,14 +55,65 @@ function applyPoliticalValues(
   );
 }
 
-function advanceMonth(gameState) {
-  gameState.government.decisionsTaken += 1;
-  gameState.government.month += 1;
+function advanceMonth(
+  gameState
+) {
+  gameState.government ??= {};
 
-  if (gameState.government.month > 12) {
-    gameState.government.month = 1;
-    gameState.government.year += 1;
-  }
+  gameState.settings ??= {
+    gameMode: "classic",
+    monthsPerDecision: 1,
+    maximumDecisions: 48,
+    annualReportInterval: 12,
+    intermediateElectionAt: 24
+  };
+
+  const monthsPerDecision =
+    Math.max(
+      1,
+      Number(
+        gameState.settings
+          .monthsPerDecision ?? 1
+      )
+    );
+
+  const previousDecisions =
+    Number(
+      gameState.government
+        .decisionsTaken ?? 0
+    );
+
+  const completedDecisions =
+    previousDecisions + 1;
+
+  const elapsedMonths =
+    Number(
+      gameState.government
+        .elapsedMonths ?? 0
+    ) + monthsPerDecision;
+
+  gameState.government
+    .decisionsTaken =
+    completedDecisions;
+
+  /*
+   * Compatibilidade com códigos
+   * antigos que usam decisions.
+   */
+  gameState.government.decisions =
+    completedDecisions;
+
+  gameState.government
+    .elapsedMonths =
+    elapsedMonths;
+
+  gameState.government.year =
+    Math.floor(
+      elapsedMonths / 12
+    ) + 1;
+
+  gameState.government.month =
+    elapsedMonths % 12 + 1;
 }
 
 
@@ -306,12 +357,36 @@ export function getNextDecision(
     },
     {
       id: "new-national-flag",
-      showAt: 5
+      showAt: 1
     },
     {
       id: "war-of-blocs",
       showAt: 14
-    }
+    },
+    {
+    id: "money-suitcase",
+    showAt: 13
+    },
+    {
+  id: "operation-peixe-vivo",
+  showAt: 10
+},
+{
+  id: "rushed-inauguration",
+  showAt: 36
+},
+{
+  id: "supreme-court-appointment",
+  showAt: 17
+},
+ {
+    id: "deepfake-monitoring-center",
+    minimumDecision: 9
+  },
+  {
+  id: "little-shirt-tax",
+  minimumDecision: 1
+}
   ];
 
   /*
@@ -400,11 +475,63 @@ export function applyChoice(
   decision,
   choice
 ) {
-  const gameState = structuredClone(
-    currentGameState
-  );
+  const gameState =
+    structuredClone(
+      currentGameState
+    );
 
-  const effects = choice.effects ?? {};
+  /*
+   * Garante que todas as estruturas
+   * necessárias existam.
+   */
+  gameState.player ??= {};
+  gameState.indicators ??= {};
+  gameState.factions ??= {};
+  gameState.country ??= {};
+  gameState.politicalProfile ??= {};
+  gameState.government ??= {};
+
+  gameState.history ??= [];
+  gameState.usedDecisionIds ??= [];
+  gameState.pendingConsequences ??= [];
+
+  gameState.corruption =
+    Number(
+      gameState.corruption ?? 0
+    );
+
+  gameState.player.personalWealth =
+    Number(
+      gameState.player
+        .personalWealth ?? 0
+    );
+
+  /*
+   * decisionsTaken é o contador
+   * principal do jogo.
+   *
+   * decisions fica sincronizado para
+   * compatibilidade com Feed, eventos
+   * agendados e códigos antigos.
+   */
+  const completedBefore =
+    Math.max(
+      Number(
+        gameState.government
+          .decisionsTaken ?? 0
+      ),
+
+      Number(
+        gameState.government
+          .decisions ?? 0
+      )
+    );
+
+  const currentDecisionNumber =
+    completedBefore + 1;
+
+  const effects =
+    choice.effects ?? {};
 
   applyValues(
     gameState.indicators,
@@ -426,113 +553,284 @@ export function applyChoice(
     effects.politics
   );
 
+  /*
+   * Corrupção
+   */
   if (
-    typeof effects.corruption === "number"
+    typeof effects.corruption ===
+    "number"
   ) {
-    gameState.corruption = clamp(
-      gameState.corruption +
-        effects.corruption,
-      GAME_CONFIG.limits.corruptionMinimum,
-      GAME_CONFIG.limits.corruptionMaximum
-    );
+    gameState.corruption =
+      clamp(
+        gameState.corruption +
+          effects.corruption,
+
+        GAME_CONFIG.limits
+          .corruptionMinimum,
+
+        GAME_CONFIG.limits
+          .corruptionMaximum
+      );
   }
 
+  /*
+   * Patrimônio pessoal
+   */
   if (
-    typeof effects.personalWealth === "number"
+    typeof effects.personalWealth ===
+    "number"
   ) {
-    gameState.player.personalWealth = Math.max(
-      0,
-      gameState.player.personalWealth +
-        effects.personalWealth
-    );
+    gameState.player
+      .personalWealth =
+      Math.max(
+        0,
+
+        gameState.player
+          .personalWealth +
+          effects.personalWealth
+      );
   }
 
+  /*
+   * Consequência futura
+   */
   if (choice.futureEffect) {
-    gameState.pendingConsequences.push({
-      id: `${decision.id}-${choice.id}-${
-        gameState.government.decisionsTaken
-      }`,
+  const afterMonths =
+    Math.max(
+      1,
+      Number(
+        choice.futureEffect
+          .afterMonths ?? 1
+      )
+    );
 
-      sourceDecisionId: decision.id,
-      sourceChoiceId: choice.id,
+  const monthsPerDecision =
+    Math.max(
+      1,
+      Number(
+        gameState.settings
+          ?.monthsPerDecision ?? 1
+      )
+    );
 
-      ...choice.futureEffect,
+  /*
+   * Clássico:
+   * 6 meses = 6 decisões.
+   *
+   * Expresso:
+   * 6 meses = próxima decisão.
+   * 18 meses = duas decisões.
+   */
+  const decisionsUntilEffect =
+    Math.max(
+      1,
+      Math.ceil(
+        afterMonths /
+        monthsPerDecision
+      )
+    );
 
-      triggerAtDecision:
-        gameState.government.decisionsTaken +
-        choice.futureEffect.afterMonths
-    });
-  }
+  gameState.pendingConsequences.push({
+    id:
+      `${decision.id}-${choice.id}-${currentDecisionNumber}`,
 
-if (choice.forcedEnding) {
-  gameState.forcedEnding =
-    choice.forcedEnding;
+    sourceDecisionId:
+      decision.id,
+
+    sourceChoiceId:
+      choice.id,
+
+    ...structuredClone(
+      choice.futureEffect
+    ),
+
+    triggerAtDecision:
+      currentDecisionNumber +
+      decisionsUntilEffect
+  });
 }
 
+  /*
+   * Final obrigatório
+   */
+  if (choice.forcedEnding) {
+    gameState.forcedEnding =
+      choice.forcedEnding;
+  }
 
-gameState.history.push({
-  type: "decision",
+  /*
+   * Histórico da decisão
+   */
+  gameState.history.push({
+    type: "decision",
 
-  decisionId: decision.id,
-  decisionTitle: decision.title,
+    decisionId:
+      decision.id,
 
-  decisionNumber:
-    gameState.government.decisionsTaken,
+    decisionTitle:
+      decision.title,
 
-  choiceId: choice.id,
-  choiceText: choice.text,
+    decisionNumber:
+      currentDecisionNumber,
 
-  law: choice.law
-    ? {
-        name: choice.law.name,
-        reason: choice.law.reason
-      }
-    : null,
+    choiceId:
+      choice.id,
 
-  budget: choice.budget
-    ? {
-        ...choice.budget
-      }
-    : null,
+    choiceText:
+      choice.text,
 
-  cabinet: choice.cabinet
-    ? structuredClone(choice.cabinet)
-    : null,
+    resultText:
+      choice.resultText ?? null,
 
-    invasion: choice.invasion
-  ? structuredClone(choice.invasion)
-  : null,
+    law:
+      choice.law
+        ? {
+            name:
+              choice.law.name,
 
-  coverUp: choice.coverUp
-  ? structuredClone(choice.coverUp)
-  : null,
+            reason:
+              choice.law.reason
+          }
+        : null,
 
-  congressVote: choice.congressVote
-  ? structuredClone(
+    budget:
+      choice.budget
+        ? structuredClone(
+            choice.budget
+          )
+        : null,
+
+    cabinet:
+      choice.cabinet
+        ? structuredClone(
+            choice.cabinet
+          )
+        : null,
+
+    invasion:
+      choice.invasion
+        ? structuredClone(
+            choice.invasion
+          )
+        : null,
+
+    coverUp:
+      choice.coverUp
+        ? structuredClone(
+            choice.coverUp
+          )
+        : null,
+
+    congressVote:
       choice.congressVote
-    )
-  : null,
+        ? structuredClone(
+            choice.congressVote
+          )
+        : null,
 
-  crisisGame: choice.crisisGame
-  ? structuredClone(choice.crisisGame)
-  : null,
+    crisisGame:
+      choice.crisisGame
+        ? structuredClone(
+            choice.crisisGame
+          )
+        : null,
 
-  privatizationAuction:
-  choice.privatizationAuction
-    ? structuredClone(
-        choice.privatizationAuction
-      )
-    : null,
+    privatizationAuction:
+      choice.privatizationAuction
+        ? structuredClone(
+            choice
+              .privatizationAuction
+          )
+        : null,
 
-  year: gameState.government.year,
-  month: gameState.government.month
-});
+    war:
+      choice.metadata?.war
+        ? structuredClone(
+            choice.metadata.war
+          )
+        : null,
 
-  gameState.usedDecisionIds.push(
-    decision.id
-  );
+    jkRoad:
+      choice.metadata?.jkRoad
+        ? structuredClone(
+            choice.metadata.jkRoad
+          )
+        : null,
 
+    year:
+      gameState.government
+        .year,
+
+    month:
+      gameState.government
+        .month
+  });
+
+  /*
+   * Resumo usado pelo Feed da Nação.
+   */
+  gameState.government
+    .lastDecisionSummary = {
+      decisionId:
+        decision.id,
+
+      choiceId:
+        choice.id,
+
+      title:
+        decision.title,
+
+      choiceText:
+        choice.text,
+
+      resultText:
+        choice.resultText ?? null,
+
+      decisionNumber:
+        currentDecisionNumber
+    };
+
+  /*
+   * Evita IDs repetidos.
+   */
+  if (
+    !gameState.usedDecisionIds
+      .includes(decision.id)
+  ) {
+    gameState.usedDecisionIds.push(
+      decision.id
+    );
+  }
+
+  /*
+   * Avança o calendário.
+   */
   advanceMonth(gameState);
+
+  /*
+   * Sincroniza os dois contadores
+   * depois do avanço do mês.
+   */
+  gameState.government
+    .decisionsTaken =
+    currentDecisionNumber;
+
+  gameState.government
+    .decisions =
+    currentDecisionNumber;
+
+  console.log(
+    "📊 Decisão contabilizada:",
+    {
+      decisionsTaken:
+        gameState.government
+          .decisionsTaken,
+
+      decisions:
+        gameState.government
+          .decisions
+    }
+  );
 
   return gameState;
 }

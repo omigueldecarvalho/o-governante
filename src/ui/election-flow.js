@@ -35,6 +35,95 @@ function randomBetween(minimum, maximum) {
   ) + minimum;
 }
 
+function numberOrZero(value) {
+  const number = Number(value);
+
+  return Number.isFinite(number)
+    ? number
+    : 0;
+}
+
+function getRivalElectionData(
+  gameState,
+  electionType
+) {
+  /*
+   * A primeira eleição continua
+   * utilizando o adversário comum.
+   */
+  if (electionType === "initial") {
+    return {
+      rival: null,
+      popularity: 50,
+      scandals: 0,
+      pressure: 0,
+      scandalBonus: 0,
+      totalImpact: 0
+    };
+  }
+
+  const rival =
+    gameState.government
+      ?.politicalRival;
+
+  if (!rival) {
+    return {
+      rival: null,
+      popularity: 50,
+      scandals: 0,
+      pressure: 0,
+      scandalBonus: 0,
+      totalImpact: 0
+    };
+  }
+
+  const popularity =
+    numberOrZero(
+      rival.popularity
+    );
+
+  const scandals =
+    numberOrZero(
+      rival.scandals
+    );
+
+  /*
+   * Rival com 70%:
+   * pressão de 5 pontos.
+   *
+   * Rival com 30%:
+   * pressão de -5, dando vantagem
+   * ao jogador.
+   */
+  const pressure =
+    (popularity - 50) *
+    0.25;
+
+  /*
+   * Cada escândalo descoberto contra
+   * o rival dá 2 pontos ao jogador.
+   */
+  const scandalBonus =
+    scandals * 2;
+
+  return {
+    rival,
+    popularity,
+    scandals,
+    pressure,
+    scandalBonus,
+
+    /*
+     * Valor final aplicado ao jogador.
+     *
+     * Positivo = vantagem.
+     * Negativo = desvantagem.
+     */
+    totalImpact:
+      scandalBonus - pressure
+  };
+}
+
 function escapeHTML(value) {
   const element =
     document.createElement("div");
@@ -49,15 +138,18 @@ function calculatePoll(
   electionType,
   campaignBonus = 0
 ) {
-  const indicators = gameState.indicators;
+  const indicators =
+    gameState.indicators;
 
   if (electionType === "initial") {
     return clamp(
       Math.round(
         54 +
         campaignBonus +
-        (indicators.people - 50) * 0.35 +
-        (indicators.stability - 50) * 0.15 +
+        (indicators.people - 50) *
+          0.35 +
+        (indicators.stability - 50) *
+          0.15 +
         randomBetween(-2, 4)
       ),
       35,
@@ -65,14 +157,40 @@ function calculatePoll(
     );
   }
 
+  const rivalData =
+    getRivalElectionData(
+      gameState,
+      electionType
+    );
+
+  console.log(
+    "Impacto eleitoral do rival:",
+    rivalData
+  );
+
   return clamp(
     Math.round(
       50 +
       campaignBonus +
-      (indicators.people - 50) * 0.35 +
-      (indicators.economy - 50) * 0.2 +
-      (indicators.stability - 50) * 0.2 -
-      gameState.corruption * 0.15 +
+
+      (indicators.people - 50) *
+        0.35 +
+
+      (indicators.economy - 50) *
+        0.2 +
+
+      (indicators.stability - 50) *
+        0.2 -
+
+      gameState.corruption *
+        0.15 +
+
+      /*
+       * Popularidade e escândalos
+       * do adversário recorrente.
+       */
+      rivalData.totalImpact +
+
       randomBetween(-4, 4)
     ),
     15,
@@ -95,14 +213,61 @@ export function renderElectionFlow({
   const playerNumber =
     gameState.player.candidateNumber;
 
-  const opponent = {
-    name: "Nestor Conserva",
+ const politicalRival =
+  electionType === "initial"
+    ? null
+    : gameState.government
+        ?.politicalRival;
 
-    number:
-      playerNumber === "38"
-        ? "17"
-        : "38"
-  };
+const opponent = {
+  id:
+    politicalRival?.id ??
+    "nestor-conserva",
+
+  name:
+    escapeHTML(
+      politicalRival?.name ??
+      "Nestor Conserva"
+    ),
+
+  nickname:
+    escapeHTML(
+      politicalRival?.nickname ??
+      "O Candidato Genérico"
+    ),
+
+  icon:
+    politicalRival?.icon ??
+    "😠",
+
+  ideology:
+    escapeHTML(
+      politicalRival?.ideology ??
+      "Conservadorismo"
+    ),
+
+  popularity:
+    numberOrZero(
+      politicalRival?.popularity ??
+      50
+    ),
+
+  scandals:
+    numberOrZero(
+      politicalRival?.scandals
+    ),
+
+  number:
+    playerNumber === "38"
+      ? "17"
+      : "38"
+};
+
+const rivalElectionData =
+  getRivalElectionData(
+    gameState,
+    electionType
+  );
 
   const pollPercentage =
   calculatePoll(
@@ -135,6 +300,38 @@ export function renderElectionFlow({
             pollPercentage,
             true
           )}
+
+          ${
+  electionType !== "initial" &&
+  politicalRival
+    ? `
+      <article class="election-rival-info">
+        <span>
+          ${opponent.icon}
+        </span>
+
+        <div>
+          <small>
+            Seu adversário recorrente
+          </small>
+
+          <strong>
+            ${opponent.name},
+            ${opponent.nickname}
+          </strong>
+
+          <p>
+            Popularidade própria:
+            ${opponent.popularity}%
+
+            · Escândalos descobertos:
+            ${opponent.scandals}
+          </p>
+        </div>
+      </article>
+    `
+    : ""
+}
 
           ${createPollCandidate(
             opponent.name,
@@ -225,11 +422,23 @@ export function renderElectionFlow({
 
           <span class="versus">VS</span>
 
-          <div>
-            <span>😠</span>
-            <strong>${opponent.name}</strong>
-          </div>
-        </div>
+         <div>
+  <span>${opponent.icon}</span>
+
+  <strong>
+    ${opponent.name}
+  </strong>
+
+  ${
+    electionType !== "initial"
+      ? `
+        <small>
+          ${opponent.nickname}
+        </small>
+      `
+      : ""
+  }
+</div>
 
         <p class="debate-question">
           Escolha sua estratégia:
@@ -731,14 +940,52 @@ const finalPercentage = clamp(
     document
       .querySelector("#finish-election")
       ?.addEventListener("click", () => {
-        onComplete({
-          type: electionType,
-          pollPercentage,
-          debateScore,
-          playerVote,
-          finalPercentage,
-          won: playerWon
-        });
+       onComplete({
+  type:
+    electionType,
+
+  pollPercentage,
+  debateScore,
+  playerVote,
+  finalPercentage,
+
+  won:
+    playerWon,
+
+  opponent: {
+    id:
+      opponent.id,
+
+    name:
+      opponent.name,
+
+    nickname:
+      opponent.nickname,
+
+    popularity:
+      opponent.popularity,
+
+    scandals:
+      opponent.scandals
+  },
+
+  rivalImpact:
+    electionType === "initial"
+      ? null
+      : {
+          pressure:
+            rivalElectionData
+              .pressure,
+
+          scandalBonus:
+            rivalElectionData
+              .scandalBonus,
+
+          total:
+            rivalElectionData
+              .totalImpact
+        }
+});
       });
   }
 

@@ -130,8 +130,98 @@ import {
   renderWarGame
 } from "./ui/war-game.js";
 
+import {
+  renderMoneySuitcaseGame
+} from "./ui/money-suitcase-game.js";
+
+import {
+  renderJKRoadGame
+} from "./ui/jk-road-game.js";
+
+import {
+  renderRushedInaugurationGame
+} from "./ui/rushed-inauguration-game.js";
+
+import {
+  renderSTFAppointmentGame
+} from "./ui/stf-appointment-game.js";
+
+import {
+  renderDeepfakeCenterGame
+} from "./ui/deepfake-center-game.js";
+
+import {
+  renderImportTaxGame
+} from "./ui/import-tax-game.js";
+
+import {
+  renderPresidentialShop
+} from "./ui/presidential-shop.js";
+
+import {
+  ensureFinancialState,
+  payPresidentialSalary,
+  registerChoiceFinancialEffects
+} from "./game/finance-engine.js";
+
+import {
+  calculatePatrimonialRisk,
+  ensureInvestigationState,
+  shouldTriggerInvestigation
+} from "./game/patrimonial-investigation.js";
+
+
+import {
+  ensureNationFeedState,
+  shouldShowNationFeed,
+  createNationFeedEntry
+} from "./game/nation-feed-engine.js";
+
+import {
+  renderNationFeedSidebar,
+  removeNationFeedSidebar
+} from "./ui/nation-feed-sidebar.js";
+
+import {
+  renderPatrimonialInvestigation
+} from "./ui/patrimonial-investigation-screen.js";
+
+import {
+  ensurePoliticalRivalState,
+  shouldTriggerRivalEvent,
+  updateRivalPopularity,
+  registerRivalAppearance,
+  getRivalPhrase,
+  respondToRival
+} from "./game/political-rival-engine.js";
+
+import {
+  ensureAchievementState,
+  checkAchievements
+} from "./game/achievement-engine.js";
+
+import {
+  showAchievementToasts
+} from "./ui/achievement-toast.js";
+
+import {
+  GAME_CONFIG
+} from "./config/game-config.js";
+
+import {
+  renderGameModeScreen,
+  renderSimulationProfileScreen
+} from "./ui/simulation-mode-screen.js";
+
+import {
+  applySimulationProfile
+} from "./game/simulation-engine.js";
+
+
 let gameState = null;
 let currentDecision = null;
+
+let pendingPlayerData = null;
 
 function showHomeScreen() {
   renderHomeScreen({
@@ -162,16 +252,86 @@ function startNewElection() {
 
 function showCreateLeaderScreen() {
   renderCreateLeaderScreen({
-    onSubmit: startGame,
-    onBack: showHomeScreen
+    onSubmit: (
+      playerData
+    ) => {
+      pendingPlayerData = {
+        ...playerData
+      };
+
+      showGameModeSelection();
+    },
+
+    onBack:
+      showHomeScreen
+  });
+}
+
+function showGameModeSelection() {
+  renderGameModeScreen({
+    onSelect: (
+      gameMode
+    ) => {
+      if (
+        gameMode ===
+        "simulation"
+      ) {
+        showSimulationProfile();
+        return;
+      }
+
+      startGame({
+        ...pendingPlayerData,
+        gameMode: "classic",
+        simulationProfile: null
+      });
+    },
+
+    onBack: () => {
+      showCreateLeaderScreen();
+    }
+  });
+}
+
+function showSimulationProfile() {
+  renderSimulationProfileScreen({
+    onComplete: (
+      simulationProfile
+    ) => {
+      startGame({
+        ...pendingPlayerData,
+        gameMode: "simulation",
+        simulationProfile
+      });
+    },
+
+    onBack: () => {
+      showGameModeSelection();
+    }
   });
 }
 
 function startGame(playerData) {
   try {
-    gameState = createInitialGameState(
-      playerData
-    );
+    gameState =
+      createInitialGameState(
+        playerData
+      );
+
+    if (
+      playerData.gameMode ===
+        "simulation" &&
+      playerData.simulationProfile
+    ) {
+      gameState =
+        applySimulationProfile(
+          gameState,
+          playerData
+            .simulationProfile
+        );
+    }
+
+    pendingPlayerData = null;
 
     saveGame(gameState);
 
@@ -179,6 +339,16 @@ function startGame(playerData) {
       "Estado inicial:",
       gameState
     );
+
+    const isSimulation =
+      gameState.settings
+        ?.gameMode ===
+      "simulation";
+
+    if (isSimulation) {
+      showGovernmentScreen();
+      return;
+    }
 
     showFootballTeamSelection();
   } catch (error) {
@@ -189,30 +359,16 @@ function startGame(playerData) {
 
     window.alert(
       `Não foi possível iniciar a partida: ${
-        error.message ?? "erro desconhecido"
+        error.message ??
+        "erro desconhecido"
       }`
     );
   }
 }
 
 function resumeGame() {
-  const savedGame = loadGame();
-
-  if (!gameState.player.footballTeam) {
-  showFootballTeamSelection();
-  return;
-}
-
-  const initialElectionCompleted =
-  gameState.electionsCompleted?.some(
-    (election) =>
-      election.type === "initial"
-  );
-
-if (!initialElectionCompleted) {
-  startElection("initial");
-  return;
-}
+  const savedGame =
+    loadGame();
 
   if (!savedGame) {
     window.alert(
@@ -226,20 +382,77 @@ if (!initialElectionCompleted) {
   gameState = savedGame;
   currentDecision = null;
 
-  if (gameState.finished) {
-    const ending = Object.values(ENDINGS).find(
-      (item) => item.id === gameState.ending
+  const isSimulation =
+  gameState.settings
+    ?.gameMode ===
+  "simulation";
+
+  /*
+   * Migração de partidas antigas.
+   */
+  gameState.settings ??= {
+    gameMode: "classic",
+    monthsPerDecision: 1,
+    maximumDecisions:
+      GAME_CONFIG.mandate
+        ?.totalMonths ?? 48,
+    annualReportInterval: 12,
+    intermediateElectionAt: 24
+  };
+
+  gameState.government
+    .elapsedMonths ??=
+    Number(
+      gameState.government
+        .decisionsTaken ?? 0
     );
 
+  if (
+  !isSimulation &&
+  !gameState.player.footballTeam
+) {
+  showFootballTeamSelection();
+  return;
+}
+
+  const initialElectionCompleted =
+  gameState.electionsCompleted
+    ?.some(
+      (election) =>
+        election.type ===
+        "initial"
+    );
+
+if (
+  !isSimulation &&
+  !initialElectionCompleted
+) {
+  startElection("initial");
+  return;
+}
+
+  if (gameState.finished) {
+    const ending =
+      Object.values(
+        ENDINGS
+      ).find(
+        (item) =>
+          item.id ===
+          gameState.ending
+      );
+
     showEnding(
-      ending ?? ENDINGS.prototypeCompleted,
-      false
+      ending ??
+      ENDINGS.prototypeCompleted
     );
 
     return;
   }
 
-  if (gameState.government.decisionsTaken === 0) {
+  if (
+    gameState.government
+      .decisionsTaken === 0
+  ) {
     showGovernmentScreen();
     return;
   }
@@ -256,24 +469,99 @@ function showGovernmentScreen() {
 }
 
 function showNextDecision() {
-  const ending = checkEnding(
+  /*
+   * Garante os estados dos sistemas,
+   * inclusive em partidas antigas.
+   */
+  ensureFinancialState(
+    gameState,
+    handleRivalResponse
+  );
+
+  ensureInvestigationState(
     gameState
   );
 
-  if (ending) {
-    showEnding(ending);
-    return;
-  }
-
-  currentDecision = getNextDecision(
-    gameState,
-    DECISIONS
+  ensureNationFeedState(
+    gameState
   );
 
+  ensurePoliticalRivalState(
+    gameState
+  );
+
+  const ending =
+    checkEnding(gameState);
+
+  if (ending) {
+    removeNationFeedSidebar();
+    showEnding(ending);
+    return;
+  };
+
+
+  
+
+  renderNationFeedSidebar(
+    gameState,
+    handleRivalResponse
+  );
+
+  // restante da função...
+
+  /*
+   * 2. A investigação patrimonial
+   * possui prioridade sobre eventos
+   * e decisões aleatórias.
+   */
+  const investigationIsPending =
+    shouldTriggerInvestigation(
+      gameState
+    );
+
+  if (investigationIsPending) {
+    currentDecision =
+      DECISIONS.find(
+        (decision) =>
+          decision.id ===
+          "patrimonial-investigation"
+      );
+  } else {
+   
+    /*
+     * 4. Fluxo normal de decisões.
+     */
+    currentDecision =
+      getNextDecision(
+        gameState,
+        DECISIONS
+      );
+  }
+
+  /*
+   * Sempre valide antes de acessar
+   * currentDecision.type.
+   */
   if (!currentDecision) {
     showEnding(
       ENDINGS.prototypeCompleted
     );
+
+    return;
+  }
+
+  /*
+   * Investigação patrimonial
+   */
+  if (
+    currentDecision.type ===
+    "patrimonial-investigation"
+  ) {
+    renderPatrimonialInvestigation({
+      gameState,
+      decision: currentDecision,
+      onComplete: handleChoice
+    });
 
     return;
   }
@@ -308,7 +596,8 @@ function showNextDecision() {
    * Criação de leis
    */
   if (
-    currentDecision.type === "law"
+    currentDecision.type ===
+    "law"
   ) {
     renderLawScreen({
       gameState,
@@ -339,7 +628,8 @@ function showNextDecision() {
    * Orçamento nacional
    */
   if (
-    currentDecision.type === "budget"
+    currentDecision.type ===
+    "budget"
   ) {
     renderBudgetScreen({
       gameState,
@@ -354,7 +644,8 @@ function showNextDecision() {
    * Escolha de ministros
    */
   if (
-    currentDecision.type === "cabinet"
+    currentDecision.type ===
+    "cabinet"
   ) {
     renderCabinetScreen({
       gameState,
@@ -369,7 +660,8 @@ function showNextDecision() {
    * Invasão estrangeira
    */
   if (
-    currentDecision.type === "invasion"
+    currentDecision.type ===
+    "invasion"
   ) {
     renderInvasionGame({
       gameState,
@@ -384,7 +676,8 @@ function showNextDecision() {
    * Operação Abafa
    */
   if (
-    currentDecision.type === "cover-up"
+    currentDecision.type ===
+    "cover-up"
   ) {
     renderCoverUpGame({
       gameState,
@@ -489,32 +782,162 @@ function showNextDecision() {
     return;
   }
 
+  /*
+   * Jogo de guerra
+   */
   if (
-  currentDecision.type ===
-  "war-game"
-) {
-  renderWarGame({
-    gameState,
-    decision: currentDecision,
+    currentDecision.type ===
+    "war-game"
+  ) {
+    renderWarGame({
+      gameState,
+      decision: currentDecision,
 
-    onComplete: (choice) => {
-      gameState.flags ??= {};
+      onComplete: (choice) => {
+        gameState.flags ??= {};
 
-      if (
-        choice.metadata
-          ?.war?.occupied
-      ) {
-        gameState.flags
-          .foreignOccupation = true;
+        if (
+          choice.metadata
+            ?.war?.occupied
+        ) {
+          gameState.flags
+            .foreignOccupation = true;
+        }
+
+        saveGame(gameState);
+        handleChoice(choice);
       }
+    });
 
-      saveGame(gameState);
-      handleChoice(choice);
-    }
-  });
+    return;
+  }
 
-  return;
-}
+  /*
+   * Mala de dinheiro
+   */
+  if (
+    currentDecision.type ===
+    "money-suitcase"
+  ) {
+    renderMoneySuitcaseGame({
+      gameState,
+      decision: currentDecision,
+      onComplete: handleChoice
+    });
+
+    return;
+  }
+
+  /*
+   * Corrida JK
+   */
+  if (
+    currentDecision.type ===
+    "jk-road-game"
+  ) {
+    renderJKRoadGame({
+      gameState,
+      decision: currentDecision,
+
+      onComplete: (choice) => {
+        gameState.flags ??= {};
+
+        if (
+          choice.metadata
+            ?.jkRoad?.crashed
+        ) {
+          gameState.flags
+            .suspiciousAccident = true;
+        }
+
+        saveGame(gameState);
+        handleChoice(choice);
+      }
+    });
+
+    return;
+  }
+
+  /*
+   * Inauguração às pressas
+   */
+  if (
+    currentDecision.type ===
+    "rushed-inauguration"
+  ) {
+    renderRushedInaugurationGame({
+      gameState,
+      decision: currentDecision,
+      onComplete: handleChoice
+    });
+
+    return;
+  }
+
+  /*
+   * Escolha do STF
+   */
+  if (
+    currentDecision.type ===
+    "stf-appointment"
+  ) {
+    renderSTFAppointmentGame({
+      gameState,
+      decision: currentDecision,
+
+      onComplete: ({
+        choice,
+        appointment
+      }) => {
+        gameState.country ??= {};
+
+        gameState.country
+          .supremeCourtAppointments ??=
+          [];
+
+        gameState.country
+          .supremeCourtAppointments
+          .push(appointment);
+
+        saveGame(gameState);
+        handleChoice(choice);
+      }
+    });
+
+    return;
+  }
+
+  /*
+   * Central do Deepfake
+   */
+  if (
+    currentDecision.type ===
+    "deepfake-center"
+  ) {
+    renderDeepfakeCenterGame({
+      gameState,
+      decision: currentDecision,
+      onComplete: handleChoice
+    });
+
+    return;
+  }
+
+  /*
+   * Taxa das Blusinhas
+   */
+  if (
+    currentDecision.type ===
+    "import-tax"
+  ) {
+    renderImportTaxGame({
+      gameState,
+      decision: currentDecision,
+      onComplete: handleChoice
+    });
+
+    return;
+  }
 
   /*
    * Decisão comum
@@ -526,38 +949,293 @@ function showNextDecision() {
   });
 }
 
+function handleRivalResponse(
+  responseId,
+  feedEntry
+) {
+  console.log(
+    "Processando resposta:",
+    {
+      responseId,
+      feedEntry
+    }
+  );
+
+  if (!feedEntry?.rival) {
+    console.error(
+      "O Feed não possui ataque de rival.",
+      feedEntry
+    );
+
+    return;
+  }
+
+  if (
+    feedEntry.rival.responded
+  ) {
+    console.warn(
+      "Esse ataque já foi respondido."
+    );
+
+    return;
+  }
+
+  const result =
+    respondToRival(
+      gameState,
+      responseId
+    );
+
+  feedEntry.rival.responded =
+    true;
+
+  feedEntry.rival.responseId =
+    responseId;
+
+  feedEntry.rival.result =
+    result;
+
+  feedEntry.rival.popularity =
+    gameState.government
+      .politicalRival
+      .popularity;
+
+  saveGame(gameState);
+
+  renderNationFeedSidebar(
+    gameState,
+    handleRivalResponse
+  );
+}
+
+
+function updateNationFeed() {
+  ensureNationFeedState(
+    gameState,
+    handleRivalResponse
+  );
+
+  ensurePoliticalRivalState(
+    gameState
+  );
+
+  if (
+    shouldShowNationFeed(
+      gameState
+    )
+  ) {
+    /*
+     * Rival cresce quando o governo
+     * apresenta índices ruins.
+     */
+    const popularityChange =
+      updateRivalPopularity(
+        gameState
+      );
+
+    const rivalWillAppear =
+      shouldTriggerRivalEvent(
+        gameState
+      );
+
+    let rivalAppearance = null;
+
+    if (rivalWillAppear) {
+      const phrase =
+        getRivalPhrase(
+          gameState
+        );
+
+      const rival =
+        registerRivalAppearance(
+          gameState
+        );
+
+      rivalAppearance = {
+        id: rival.id,
+        icon: rival.icon,
+        name: rival.name,
+        nickname: rival.nickname,
+        ideology: rival.ideology,
+        phrase,
+
+        popularity:
+          rival.popularity,
+
+        popularityChange
+      };
+    }
+
+    const feedEntry =
+      createNationFeedEntry(
+        gameState
+      );
+
+    /*
+     * Anexa o ataque político
+     * ao Feed criado nessa rodada.
+     */
+    feedEntry.rival =
+      rivalAppearance;
+
+    saveGame(gameState);
+  }
+
+  renderNationFeedSidebar(
+    gameState,
+    handleRivalResponse
+  );
+}
+
 
 function handleChoice(choice) {
+  if (!choice) {
+    console.error(
+      "Nenhuma escolha foi recebida."
+    );
+
+    return;
+  }
+
+  
+
+  if (!currentDecision) {
+    console.error(
+      "Nenhuma decisão atual foi encontrada."
+    );
+
+    return;
+  }
+
   const selectedDecision =
     currentDecision;
 
+  /*
+   * Aplica indicadores, corrupção,
+   * patrimônio e demais efeitos.
+   */
   gameState = applyChoice(
     gameState,
     selectedDecision,
     choice
   );
 
+  /*
+   * Registra a origem do dinheiro que
+   * applyChoice já adicionou.
+   *
+   * Essa função não adiciona o valor
+   * novamente ao patrimônio.
+   */
+  registerChoiceFinancialEffects(
+    gameState,
+    choice
+  );
+
+  /*
+   * Paga o salário legítimo referente
+   * ao período da decisão.
+   */
+  const receivedSalary =
+  payPresidentialSalary(
+    gameState
+  );
+
+gameState.government
+  .lastSalaryPayment =
+  receivedSalary;
+
+const unlockedAchievements =
+  checkAchievements(
+    gameState
+  );
+
+saveGame(gameState);
+
+renderChoiceResult({
+  decision:
+    selectedDecision,
+
+  choice,
+  gameState,
+
+  onContinue: () => {
+    currentDecision = null;
+    processPendingConsequences();
+  },
+
+  onOpenShop:
+    openPresidentialShop
+});
+
+updateNationFeed();
+
+showAchievementToasts(
+  unlockedAchievements
+);
+
+  gameState.government ??= {};
+
+  gameState.government
+    .lastSalaryPayment =
+    receivedSalary;
+
+    gameState.government
+  .lastDecisionSummary = {
+    decisionId:
+      selectedDecision.id,
+
+    choiceId:
+      choice.id,
+
+    title:
+      selectedDecision.title,
+
+    choiceText:
+      choice.text,
+
+    resultText:
+      choice.resultText
+  };
+
   saveGame(gameState);
 
   console.log(
     "Decisão tomada:",
-    choice
+    {
+      decision:
+        selectedDecision.id,
+
+      choice:
+        choice.id,
+
+      salary:
+        receivedSalary
+    }
   );
 
   console.log(
-    "Estado atualizado:",
-    gameState
+    "Estado financeiro:",
+    gameState.player.finances
   );
 
   renderChoiceResult({
-    decision: selectedDecision,
+    decision:
+      selectedDecision,
+
     choice,
+    gameState,
 
     onContinue: () => {
       currentDecision = null;
+
       processPendingConsequences();
-    }
+    },
+
+    onOpenShop:
+      openPresidentialShop
   });
+  updateNationFeed();
 }
 
 function processPendingConsequences() {
@@ -593,32 +1271,25 @@ function processPendingConsequences() {
   });
 }
 
-function showEnding(
-  ending,
-  updateState = true
-) {
-  if (updateState) {
-    gameState = finishGame(
-      gameState,
-      ending
-    );
+function showEnding(ending) {
+  removeNationFeedSidebar();
 
-    if (
-      ending.id ===
-      "initial-election-defeat"
-    ) {
-      clearSavedGame();
-    } else {
-      saveGame(gameState);
-      archiveGovernment(gameState);
-    }
-  }
+  gameState = finishGame(
+    gameState,
+    ending
+  );
+
+  saveGame(gameState);
 
   renderEndingScreen({
     gameState,
     ending,
-    onRestart: restartGame,
-    onHome: showHomeScreen
+
+    onRestart:
+      restartGame,
+
+    onHome:
+      showHomeScreen
   });
 }
 
@@ -670,26 +1341,55 @@ function handleClearHistory() {
 }
 
 function processAnnualReport() {
-  if (
-    !Array.isArray(
-      gameState.shownAnnualReports
-    )
-  ) {
-    gameState.shownAnnualReports = [];
+  const isSimulation =
+    gameState.settings
+      ?.gameMode ===
+    "simulation";
+
+  if (isSimulation) {
+    processIntermediateElection();
+    return;
   }
 
+
   const decisionsTaken =
-    gameState.government.decisionsTaken;
+    Number(
+      gameState.government
+        ?.decisionsTaken ?? 0
+    );
+
+  const elapsedMonths =
+    Number(
+      gameState.government
+        ?.elapsedMonths ??
+      decisionsTaken
+    );
+
+  const reportInterval =
+    Number(
+      gameState.settings
+        ?.annualReportInterval ??
+      12
+    );
 
   const completedYear =
-    decisionsTaken / 12;
+    Math.max(
+      1,
+      Math.floor(
+        elapsedMonths / 12
+      )
+    );
+
+  const reportId =
+    `year-${completedYear}`;
 
   const mustShowReport =
     decisionsTaken > 0 &&
-    decisionsTaken % 12 === 0 &&
-    !gameState.shownAnnualReports.includes(
-      completedYear
-    );
+    decisionsTaken %
+      reportInterval ===
+      0 &&
+    !gameState.shownAnnualReports
+      .includes(reportId);
 
   if (!mustShowReport) {
     processIntermediateElection();
@@ -697,17 +1397,28 @@ function processAnnualReport() {
   }
 
   gameState.shownAnnualReports.push(
-    completedYear
+    reportId
   );
 
   saveGame(gameState);
 
   renderAnnualReport({
     gameState,
-    year: completedYear,
+    year:
+      completedYear,
 
     onContinue: () => {
       processIntermediateElection();
+    }
+  });
+}
+
+function openPresidentialShop() {
+  renderPresidentialShop({
+    gameState,
+
+    onPurchase: () => {
+      saveGame(gameState);
     }
   });
 }
@@ -784,13 +1495,17 @@ function startElection(electionType) {
 }
 
 function processIntermediateElection() {
-  if (
-    !Array.isArray(
-      gameState.electionsCompleted
-    )
-  ) {
-    gameState.electionsCompleted = [];
+  const isSimulation =
+    gameState.settings
+      ?.gameMode ===
+    "simulation";
+
+  if (isSimulation) {
+    showNextDecision();
+    return;
   }
+
+  // restante da função...
 
   const alreadyCompleted =
     gameState.electionsCompleted.some(
@@ -799,13 +1514,29 @@ function processIntermediateElection() {
         "intermediate"
     );
 
+  const electionDecision =
+    Number(
+      gameState.settings
+        ?.intermediateElectionAt ??
+      24
+    );
+
+  const decisionsTaken =
+    Number(
+      gameState.government
+        ?.decisionsTaken ?? 0
+    );
+
   const mustHoldElection =
-    gameState.government
-      .decisionsTaken >= 24 &&
+    decisionsTaken >=
+      electionDecision &&
     !alreadyCompleted;
 
   if (mustHoldElection) {
-    startElection("intermediate");
+    startElection(
+      "intermediate"
+    );
+
     return;
   }
 

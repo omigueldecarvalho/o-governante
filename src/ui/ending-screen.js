@@ -11,6 +11,16 @@ import {
   getIndicatorLabel
 } from "../game/political-analysis.js";
 
+import {
+  createFinalReport
+} from "../game/endings-engine.js";
+
+
+import {
+  downloadEndingCard,
+  shareEndingCard
+} from "./ending-share.js";
+
 function formatCurrency(value) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -49,7 +59,10 @@ export function renderEndingScreen({
   onRestart,
   onHome
 }) {
-  const app = document.querySelector("#app");
+  const app =
+    document.querySelector(
+      "#app"
+    );
 
   if (!app) {
     console.error(
@@ -59,67 +72,99 @@ export function renderEndingScreen({
     return;
   }
 
+  const finalReport =
+    gameState.finalReport ??
+    createFinalReport(
+      gameState,
+      ending
+    );
+
+  /*
+   * Derrota na eleição inicial:
+   * não possui relatório de governo.
+   */
   if (
-  ending.id === "initial-election-defeat"
-) {
-  app.innerHTML = `
-    <section class="screen ending-screen">
-      <div class="ending-icon">
-        ${ending.icon}
-      </div>
+    ending.id ===
+    "initial-election-defeat"
+  ) {
+    app.innerHTML = `
+      <section class="screen ending-screen">
+        <div class="ending-icon">
+          ${ending.icon}
+        </div>
 
-      <p class="eyebrow">
-        Fim da campanha
-      </p>
+        <p class="eyebrow">
+          Fim da campanha
+        </p>
 
-     <h1>${ending.title}</h1>
+        <h1>${ending.title}</h1>
 
-${renderNationalFlag(
-  gameState.country?.flag,
-  "ending"
-)}
+        ${renderNationalFlag(
+          gameState.country?.flag,
+          "ending"
+        )}
 
-<p class="ending-description">
-  ${ending.description}
-</p>
+        <p class="ending-description">
+          ${ending.description}
+        </p>
 
-      <button
-        type="button"
-        class="primary-button"
-        id="restart-after-ending"
-      >
-        Tentar outra eleição
-      </button>
+        <button
+          type="button"
+          class="primary-button"
+          id="restart-after-ending"
+        >
+          Tentar outra eleição
+        </button>
 
-      <button
-        type="button"
-        class="secondary-button"
-        id="return-home"
-      >
-        Voltar à tela inicial
-      </button>
-    </section>
-  `;
+        <button
+          type="button"
+          class="secondary-button"
+          id="return-home"
+        >
+          Voltar à tela inicial
+        </button>
+      </section>
+    `;
 
-  document
-    .querySelector("#restart-after-ending")
-    ?.addEventListener(
-      "click",
-      onRestart
-    );
+    document
+      .querySelector(
+        "#restart-after-ending"
+      )
+      ?.addEventListener(
+        "click",
+        () => {
+          if (
+            typeof onRestart ===
+            "function"
+          ) {
+            onRestart();
+          }
+        }
+      );
 
-  document
-    .querySelector("#return-home")
-    ?.addEventListener(
-      "click",
-      onHome
-    );
+    document
+      .querySelector(
+        "#return-home"
+      )
+      ?.addEventListener(
+        "click",
+        () => {
+          if (
+            typeof onHome ===
+            "function"
+          ) {
+            onHome();
+          }
+        }
+      );
 
-  return;
-}
+    return;
+  }
 
   const finalIdeology =
-    calculateFinalIdeology(gameState);
+    calculateFinalIdeology(
+      gameState
+    );
 
   const coherence =
     calculatePoliticalCoherence(
@@ -127,26 +172,43 @@ ${renderNationalFlag(
       finalIdeology
     );
 
-  const epithet = generateEpithet(
-    gameState,
+  const epithet =
+    generateEpithet(
+      gameState,
+      finalIdeology
+    );
+
+  const initialIdeology =
+    IDEOLOGIES.find(
+      (ideology) =>
+        ideology.id ===
+        gameState.player
+          .initialIdeology
+    );
+
+  const decisionsTaken =
+    finalReport.government
+      ?.decisionsTaken ?? 0;
+
+  const durationLabel =
+    finalReport.government
+      ?.durationLabel ??
+    "Tempo desconhecido";
+
+  console.log(
+    "Ideologia final:",
     finalIdeology
   );
 
-  const initialIdeology = IDEOLOGIES.find(
-    (ideology) =>
-      ideology.id ===
-      gameState.player.initialIdeology
+  console.log(
+    "Coerência política:",
+    coherence
   );
 
-  const decisionsTaken =
-    gameState.history.filter(
-      (item) =>
-        item.type !== "consequence"
-    ).length;
-
-  console.log("Ideologia final:", finalIdeology);
-  console.log("Coerência política:", coherence);
-  console.log("Alcunha:", epithet);
+  console.log(
+    "Alcunha:",
+    epithet
+  );
 
   app.innerHTML = `
     <section class="screen ending-screen">
@@ -226,7 +288,8 @@ ${renderNationalFlag(
             name: "Povo",
             key: "people",
             value:
-              gameState.indicators.people
+              gameState.indicators
+                .people
           })}
 
           ${createTranslatedIndicator({
@@ -234,7 +297,8 @@ ${renderNationalFlag(
             name: "Congresso",
             key: "congress",
             value:
-              gameState.indicators.congress
+              gameState.indicators
+                .congress
           })}
 
           ${createTranslatedIndicator({
@@ -242,7 +306,8 @@ ${renderNationalFlag(
             name: "Economia",
             key: "economy",
             value:
-              gameState.indicators.economy
+              gameState.indicators
+                .economy
           })}
 
           ${createTranslatedIndicator({
@@ -250,33 +315,35 @@ ${renderNationalFlag(
             name: "Estabilidade",
             key: "stability",
             value:
-              gameState.indicators.stability
+              gameState.indicators
+                .stability
           })}
 
           ${createTranslatedIndicator({
             icon: "⚠️",
             name: "Corrupção",
             key: "corruption",
-            value: gameState.corruption
+            value:
+              gameState.corruption
           })}
         </div>
       </section>
 
       <div class="ending-summary">
         <article>
-          <small>Tempo no poder</small>
+          <small>
+            Tempo no poder
+          </small>
 
           <strong>
-            ${
-              gameState.government
-                .decisionsTaken
-            }
-            meses
+            ${durationLabel}
           </strong>
         </article>
 
         <article>
-          <small>Decisões tomadas</small>
+          <small>
+            Decisões tomadas
+          </small>
 
           <strong>
             ${decisionsTaken}
@@ -284,7 +351,9 @@ ${renderNationalFlag(
         </article>
 
         <article>
-          <small>Corrupção</small>
+          <small>
+            Corrupção
+          </small>
 
           <strong>
             ${gameState.corruption}
@@ -292,7 +361,9 @@ ${renderNationalFlag(
         </article>
 
         <article>
-          <small>Patrimônio pessoal</small>
+          <small>
+            Patrimônio pessoal
+          </small>
 
           <strong>
             ${formatCurrency(
@@ -301,6 +372,24 @@ ${renderNationalFlag(
             )}
           </strong>
         </article>
+      </div>
+
+      <div class="ending-share-actions">
+        <button
+          type="button"
+          class="primary-button"
+          id="share-ending"
+        >
+          📤 Compartilhar resultado
+        </button>
+
+        <button
+          type="button"
+          class="secondary-button"
+          id="download-ending"
+        >
+          💾 Baixar imagem
+        </button>
       </div>
 
       <button
@@ -321,6 +410,16 @@ ${renderNationalFlag(
     </section>
   `;
 
+  const shareButton =
+    document.querySelector(
+      "#share-ending"
+    );
+
+  const downloadButton =
+    document.querySelector(
+      "#download-ending"
+    );
+
   const restartButton =
     document.querySelector(
       "#restart-after-ending"
@@ -330,6 +429,92 @@ ${renderNationalFlag(
     document.querySelector(
       "#return-home"
     );
+
+  /*
+   * Compartilhar
+   */
+  shareButton?.addEventListener(
+    "click",
+    async () => {
+      const originalText =
+        shareButton.textContent;
+
+      shareButton.disabled = true;
+
+      shareButton.textContent =
+        "Gerando imagem...";
+
+      try {
+        const result =
+          await shareEndingCard(
+            gameState
+          );
+
+        console.log(
+          "Compartilhamento:",
+          result
+        );
+      } catch (error) {
+        console.error(
+          "Erro ao compartilhar:",
+          error
+        );
+
+        window.alert(
+          "Não foi possível compartilhar o resultado."
+        );
+      } finally {
+        shareButton.disabled = false;
+
+        shareButton.textContent =
+          originalText;
+      }
+    }
+  );
+
+  /*
+   * Baixar imagem
+   */
+  downloadButton?.addEventListener(
+    "click",
+    async () => {
+      const originalText =
+        downloadButton.textContent;
+
+      downloadButton.disabled =
+        true;
+
+      downloadButton.textContent =
+        "Gerando imagem...";
+
+      try {
+        const result =
+          await downloadEndingCard(
+            gameState
+          );
+
+        console.log(
+          "Download:",
+          result
+        );
+      } catch (error) {
+        console.error(
+          "Erro ao baixar imagem:",
+          error
+        );
+
+        window.alert(
+          "Não foi possível gerar a imagem do governo."
+        );
+      } finally {
+        downloadButton.disabled =
+          false;
+
+        downloadButton.textContent =
+          originalText;
+      }
+    }
+  );
 
   if (
     restartButton &&
