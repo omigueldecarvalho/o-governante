@@ -484,11 +484,18 @@ export function renderNationFeedSidebar(
    * Funciona mesmo que o conteúdo
    * interno seja atualizado.
    */
-  sidebar.addEventListener(
-    "click",
-    (event) => {
+  sidebar.onclick = (event) => {
+      const eventTarget =
+        event.target;
+
+      if (
+        !(eventTarget instanceof Element)
+      ) {
+        return;
+      }
+
       const button =
-        event.target.closest(
+        eventTarget.closest(
           "[data-rival-response]"
         );
 
@@ -520,6 +527,13 @@ export function renderNationFeedSidebar(
         return;
       }
 
+      if (
+        latestEntry?.rival
+          ?.responded
+      ) {
+        return;
+      }
+
       /*
        * Impede clique duplo enquanto
        * processa a resposta.
@@ -535,15 +549,61 @@ export function renderNationFeedSidebar(
           }
         );
 
-      onRivalResponse(
-        responseId,
-        latestEntry
-      );
-    },
-    {
-      once: true
-    }
-  );
+      try {
+        const responseResult =
+          onRivalResponse(
+            responseId,
+            latestEntry
+          );
+
+        /*
+         * Também aceita callbacks
+         * assíncronos. Se houver erro,
+         * libera os botões novamente.
+         */
+        if (
+          responseResult &&
+          typeof responseResult.then ===
+            "function"
+        ) {
+          responseResult.catch(
+            (error) => {
+              console.error(
+                "Erro ao responder ao rival:",
+                error
+              );
+
+              sidebar
+                .querySelectorAll(
+                  "[data-rival-response]"
+                )
+                .forEach(
+                  (rivalButton) => {
+                    rivalButton.disabled =
+                      false;
+                  }
+                );
+            }
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Erro ao responder ao rival:",
+          error
+        );
+
+        sidebar
+          .querySelectorAll(
+            "[data-rival-response]"
+          )
+          .forEach(
+            (rivalButton) => {
+              rivalButton.disabled =
+                false;
+            }
+          );
+      }
+    };
 
   document.body.classList.add(
     "nation-feed-visible"

@@ -16,6 +16,7 @@ export function renderHomeScreen({
   onResume,
   onHistory,
   onAbout,
+  onPoliticalCompass,
   hasSavedGame
 }) {
   const app = document.querySelector("#app");
@@ -73,6 +74,14 @@ export function renderHomeScreen({
       <button
         type="button"
         class="secondary-button"
+        id="open-political-compass"
+      >
+        🧭 Descubra sua orientação política
+      </button>
+
+      <button
+        type="button"
+        class="secondary-button"
         id="government-history"
       >
         Histórico de governos
@@ -83,28 +92,40 @@ export function renderHomeScreen({
         class="secondary-button"
         id="open-about"
       >
-      Saiba mais e apoiar
+        ℹ️ Saiba mais e apoiar
       </button>
     </section>
   `;
 
-  const startButton = document.querySelector(
-    "#start-game"
-  );
+  const startButton =
+    document.querySelector(
+      "#start-game"
+    );
 
-  const resumeButton = document.querySelector(
-    "#resume-game"
-  );
+  const resumeButton =
+    document.querySelector(
+      "#resume-game"
+    );
 
-  const historyButton = document.querySelector(
-    "#government-history"
-  );
+  const politicalCompassButton =
+    document.querySelector(
+      "#open-political-compass"
+    );
 
-  const aboutButton = document.querySelector(
-    "#open-about"
-  );
+  const historyButton =
+    document.querySelector(
+      "#government-history"
+    );
 
-  if (startButton && typeof onStart === "function") {
+  const aboutButton =
+    document.querySelector(
+      "#open-about"
+    );
+
+  if (
+    startButton &&
+    typeof onStart === "function"
+  ) {
     startButton.addEventListener(
       "click",
       onStart
@@ -118,6 +139,17 @@ export function renderHomeScreen({
     resumeButton.addEventListener(
       "click",
       onResume
+    );
+  }
+
+  if (
+    politicalCompassButton &&
+    typeof onPoliticalCompass ===
+      "function"
+  ) {
+    politicalCompassButton.addEventListener(
+      "click",
+      onPoliticalCompass
     );
   }
 

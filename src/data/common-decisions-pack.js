@@ -2,7 +2,7 @@ export const COMMON_DECISIONS = [
   {
     id: "minimum-wage-adjustment",
     type: "common",
-    category: "economy",
+    category: "Economia",
     weight: 3,
     character: {
       name: "Célia Martins",
@@ -69,7 +69,7 @@ export const COMMON_DECISIONS = [
   {
     id: "public-health-collapse",
     type: "common",
-    category: "health",
+    category: "Saúde",
     weight: 3,
     character: {
       name: "Dra. Lúcia Seringa",
@@ -192,7 +192,7 @@ export const COMMON_DECISIONS = [
   {
     id: "national-teachers-strike",
     type: "common",
-    category: "education",
+    category: "Educação",
     weight: 3,
     character: {
       name: "Professor Gizberto",
@@ -317,7 +317,7 @@ export const COMMON_DECISIONS = [
   {
     id: "national-housing-program",
     type: "common",
-    category: "housing",
+    category: "Moradia",
     weight: 3,
     character: {
       name: "Márcia Tijolo",
@@ -375,7 +375,7 @@ export const COMMON_DECISIONS = [
   {
     id: "family-ministry-appointment",
     type: "common",
-    category: "politics",
+    category: "Política",
     weight: 3,
     character: {
       name: "Juninho de Sobrenome",
@@ -430,7 +430,7 @@ export const COMMON_DECISIONS = [
   {
     id: "wealth-tax-proposal",
     type: "common",
-    category: "economy",
+    category: "Economia",
     weight: 3,
     character: {
       name: "Rico de Almeida",
@@ -563,7 +563,7 @@ export const COMMON_DECISIONS = [
   {
     id: "felipe-grandpa-support",
     type: "common",
-    category: "communication",
+    category: "Comunicação",
     weight: 3,
     character: {
       name: "Felipe Avô",

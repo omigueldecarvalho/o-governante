@@ -321,7 +321,7 @@ export function renderCongressVoteGame({
     return;
   }
 
-  let politicalCapital = 100;
+  let politicalCapital = 70;
   let finished = false;
 
   let securedVotes = clamp(

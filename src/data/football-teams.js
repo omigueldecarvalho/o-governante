@@ -6,7 +6,7 @@ export const FOOTBALL_TEAMS = [
     icon: "⭐",
 
     description:
-      "Clube tradicional que sobreviveu a dívidas, previsões matemáticas e traumas considerados irreversíveis.",
+      "Clube tradicional que sobreviveu a dívidas e traumas considerados irreversíveis.",
 
     effects: {
       indicators: {
@@ -42,11 +42,11 @@ export const FOOTBALL_TEAMS = [
   {
     id: "flamingos",
     name: "Flamingos",
-    nickname: "A Nação Rubra",
+    nickname: "A Nação",
     icon: "🦩",
 
     description:
-      "Dono da maior torcida do país e de dirigentes frequentemente encontrados em reuniões que ninguém marcou.",
+      "Dono da maior torcida do país e de dirigentes frequentemente encontrados em situações inusistadas.",
 
     effects: {
       indicators: {
@@ -74,7 +74,7 @@ export const FOOTBALL_TEAMS = [
       },
 
       country: {},
-      corruption: 5,
+      corruption: 20,
       personalWealth: 0
     }
   },
@@ -82,15 +82,15 @@ export const FOOTBALL_TEAMS = [
   {
     id: "coqueiros",
     name: "Coqueiros",
-    nickname: "A Academia Financeira",
+    nickname: "A Academia",
     icon: "🌴",
 
     description:
-      "Clube rico, organizado e acusado pelos rivais de possuir recursos financeiros sobrenaturais.",
+      "Clube rico, com alguns titulos de papel e suspostas ligações com ideologias italianas.",
 
     effects: {
       indicators: {
-        people: 4,
+        people: 2,
         congress: 3,
         economy: 10,
         stability: 5
@@ -124,12 +124,12 @@ export const FOOTBALL_TEAMS = [
 
   {
     id: "gambas-da-republica",
-    name: "Gambás da República",
+    name: "Gambás",
     nickname: "O Time do Povo",
     icon: "🦨",
 
     description:
-      "Clube popular acostumado a disputar títulos, crises políticas e investigações sobre estádios.",
+      "Clube popular acostumado a tentar disputar títulos, crises políticas e investigações sobre estádios",
 
     effects: {
       indicators: {
@@ -157,24 +157,24 @@ export const FOOTBALL_TEAMS = [
       },
 
       country: {},
-      corruption: 6,
+      corruption: 10,
       personalWealth: 0
     }
   },
 
   {
-    id: "imortal-do-sul",
-    name: "Imortal do Sul",
-    nickname: "Nunca Rebaixado na Própria Memória",
-    icon: "🇪🇪",
+    id: "time-local",
+    name: "Time Local",
+    nickname: "Time da Cidade",
+    icon: "🏘️",
 
     description:
-      "Clube que se recusa a aceitar derrotas, rebaixamentos e fatos históricos inconvenientes.",
+      "Qualquer clube que represente a cidade do candidato, pode ser considerado uma escolha segura",
 
     effects: {
       indicators: {
         people: 3,
-        congress: 2,
+        congress: 0,
         economy: 1,
         stability: 9
       },
@@ -205,11 +205,11 @@ export const FOOTBALL_TEAMS = [
   {
     id: "esmeraldinos",
     name: "Esmeraldinos",
-    nickname: "O Maior Verde do Centro-Oeste",
+    nickname: "Definitivamente um Verde do Centro-Oeste",
     icon: "💚",
 
     description:
-      "Clube que carrega o orgulho do cerrado e a experiência de transitar por todas as divisões disponíveis.",
+      "A experiência de transitar por todas as divisões disponíveis.",
 
     effects: {
       indicators: {
@@ -238,6 +238,46 @@ export const FOOTBALL_TEAMS = [
 
       country: {},
       corruption: 0,
+      personalWealth: 0
+    }
+  },
+
+  {
+    id: "vila-nova",
+    name: "Vilaaaaaaa",
+    nickname: "Setor-bairro ou vila",
+    icon: "🟥",
+
+    description:
+      "Nunca disputou a primeira divisão, quase garantiu o acesso mas perdeu para o último colocado, torcedores gostam de gritar o nome do time.",
+
+    effects: {
+      indicators: {
+        people: 6,
+        congress: 1,
+        economy: -2,
+        stability: 6
+      },
+
+      politics: {
+        economicPosition: 0,
+        socialPosition: 0,
+        authoritarianism: 0,
+        popularParticipation: 5,
+        personalism: 2
+      },
+
+      factions: {
+        military: 0,
+        business: 0,
+        unions: 3,
+        socialMovements: 4,
+        religiousGroups: 2,
+        press: 1
+      },
+
+      country: {},
+      corruption: 5,
       personalWealth: 0
     }
   },

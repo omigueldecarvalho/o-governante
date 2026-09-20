@@ -98,7 +98,7 @@ export const ACHIEVEMENTS = [
     name: "Pai dos Pobres Premium",
 
     description:
-      "Alcance 90 pontos de apoio popular.",
+      "Alcance 99 pontos de apoio popular.",
 
     secretDescription:
       "Faça o povo amar você.",
@@ -108,7 +108,7 @@ export const ACHIEVEMENTS = [
         numberOrZero(
           gameState.indicators
             ?.people
-        ) >= 90
+        ) >= 99
       );
     }
   },

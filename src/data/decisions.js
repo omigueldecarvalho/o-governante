@@ -1369,7 +1369,7 @@ weight: 8,
 
     {
       id: "union-leader",
-      name: "Joana Operária",
+      name: "Mariela Operária",
       role: "Líder sindical",
       icon: "✊",
 
@@ -1449,7 +1449,7 @@ weight: 8,
 
     {
       id: "religious-leader",
-      name: "Pastor Josué da Nação",
+      name: "Pastor Raporoso",
       role: "Líder religioso",
       icon: "🙏",
 
@@ -1480,7 +1480,7 @@ weight: 8,
 
         country: {},
 
-        corruption: 3,
+        corruption: 5,
         personalWealth: 0
       }
     },
@@ -1527,7 +1527,7 @@ weight: 8,
 
     {
       id: "scientist",
-      name: "Dra. Márcia Ciência",
+      name: "Dra. Maria Ciência",
       role: "Pesquisadora e médica",
       icon: "🔬",
 

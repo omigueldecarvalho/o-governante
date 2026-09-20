@@ -229,6 +229,27 @@ import {
 
 import "./ui/debug-panel.css";
 
+import {
+  POLITICAL_COMPASS_QUESTIONS
+} from "./data/political-compass-questions.js";
+
+import {
+  calculatePoliticalCompassResult
+} from "./game/political-compass-engine.js";
+
+import {
+  renderPoliticalCompassScreen
+} from "./ui/political-compass-screen.js";
+
+import {
+  renderPoliticalCompassResult
+} from "./ui/political-compass-result.js";
+
+import {
+  downloadPoliticalCompassResult,
+  sharePoliticalCompassResult
+} from "./ui/political-compass-share.js";
+
 let debugForcedDecisionId = null;
 
 
@@ -238,12 +259,26 @@ let currentDecision = null;
 let pendingPlayerData = null;
 
 function showHomeScreen() {
+  removeNationFeedSidebar();
+
   renderHomeScreen({
-    onStart: startNewElection,
-    onResume: resumeGame,
-    onHistory: showGovernmentHistory,
-    onAbout: showAboutScreen,
-    hasSavedGame: hasSavedGame()
+    onStart:
+      startNewElection,
+
+    onResume:
+      resumeGame,
+
+    onHistory:
+      showGovernmentHistory,
+
+    onAbout:
+      showAboutScreen,
+
+    onPoliticalCompass:
+      showPoliticalCompass,
+
+    hasSavedGame:
+      hasSavedGame()
   });
 }
 
@@ -263,6 +298,41 @@ function startNewElection() {
   currentDecision = null;
 
   showCreateLeaderScreen();
+}
+
+function showPoliticalCompassResult(
+  result
+) {
+  renderPoliticalCompassResult({
+    result,
+
+    onUseInGame: () => {
+      sessionStorage.setItem(
+        "political-compass-result",
+        result.ideologyId
+      );
+
+      showCreateLeaderScreen();
+    },
+
+    onRestart:
+      showPoliticalCompass,
+
+    onHome:
+      showHomeScreen,
+
+    onShare: async () => {
+      await sharePoliticalCompassResult(
+        result
+      );
+    },
+
+    onDownload: async () => {
+      await downloadPoliticalCompassResult(
+        result
+      );
+    }
+  });
 }
 
 function showCreateLeaderScreen() {
@@ -1345,6 +1415,35 @@ function restartGame() {
 }
 
 showHomeScreen();
+
+function showPoliticalCompass() {
+  console.log(
+    "🧭 Abrindo Bússola do Governante"
+  );
+
+  removeNationFeedSidebar();
+
+  renderPoliticalCompassScreen({
+    questions:
+      POLITICAL_COMPASS_QUESTIONS,
+
+    onComplete: ({
+      state
+    }) => {
+      const result =
+        calculatePoliticalCompassResult(
+          state
+        );
+
+      showPoliticalCompassResult(
+        result
+      );
+    },
+
+    onCancel:
+      showHomeScreen
+  });
+}
 
 function showGovernmentHistory() {
   const history = getGovernmentHistory();

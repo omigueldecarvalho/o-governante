@@ -8330,3 +8330,493 @@ h1 {
     min-height: 220px;
   }
 }
+/* ========================================
+   BÚSSOLA DO GOVERNANTE
+======================================== */
+
+.political-compass-screen,
+.political-compass-result-screen {
+  width: min(100%, 820px);
+  min-height: auto;
+  margin: 0 auto;
+  padding: 32px;
+  border: 1px solid rgba(79, 220, 125, 0.15);
+  border-radius: 28px;
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(79, 220, 125, 0.1),
+      transparent 35%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(18, 38, 29, 0.98),
+      rgba(8, 20, 14, 0.98)
+    );
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.35);
+}
+
+.compass-header {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.compass-header .back-button {
+  align-self: flex-start;
+  margin: 0 0 8px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: #bad0c2;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.compass-header .back-button:hover {
+  color: #50df80;
+  transform: translateX(-3px);
+}
+
+.compass-heading {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.compass-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border: 1px solid rgba(79, 220, 125, 0.25);
+  border-radius: 20px;
+  background: rgba(79, 220, 125, 0.1);
+  font-size: 2rem;
+  box-shadow:
+    inset 0 0 20px rgba(79, 220, 125, 0.05);
+}
+
+.compass-heading .eyebrow {
+  margin: 0 0 4px;
+  color: #50df80;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.compass-heading h1 {
+  margin: 0;
+  color: #f5fff8;
+  font-size: clamp(1.7rem, 5vw, 2.8rem);
+  line-height: 1.05;
+}
+
+.compass-progress-information {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  color: #a9bbae;
+  font-size: 0.88rem;
+}
+
+.compass-progress-information strong {
+  color: #50df80;
+  font-size: 0.95rem;
+}
+
+.compass-progress-bar {
+  width: 100%;
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.compass-progress-bar > div {
+  height: 100%;
+  min-width: 5px;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      90deg,
+      #35c96d,
+      #6bf59a
+    );
+  box-shadow:
+    0 0 18px rgba(79, 220, 125, 0.45);
+  transition: width 300ms ease;
+}
+
+/* Pergunta */
+
+.compass-question-card {
+  position: relative;
+  margin-top: 30px;
+  padding: 30px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.055),
+      rgba(255, 255, 255, 0.015)
+    );
+}
+
+.compass-question-card::after {
+  position: absolute;
+  top: -55px;
+  right: -45px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: rgba(79, 220, 125, 0.055);
+  content: "";
+}
+
+.compass-question-number {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 20px;
+  place-items: center;
+  border-radius: 12px;
+  background: #50df80;
+  color: #07130c;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.compass-question-card h2 {
+  position: relative;
+  z-index: 1;
+  max-width: 650px;
+  margin: 0;
+  color: #f5fff8;
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  line-height: 1.2;
+}
+
+.compass-question-card p {
+  position: relative;
+  z-index: 1;
+  max-width: 650px;
+  margin: 16px 0 0;
+  color: #b9c8bd;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Respostas */
+
+.compass-answers {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.compass-answer-button {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  width: 100%;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.035);
+  color: #eaf5ed;
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 650;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.compass-answer-button:hover {
+  border-color: rgba(79, 220, 125, 0.55);
+  background: rgba(79, 220, 125, 0.1);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 25px rgba(0, 0, 0, 0.2);
+}
+
+.compass-answer-button:focus-visible {
+  outline: 3px solid rgba(79, 220, 125, 0.3);
+  outline-offset: 3px;
+}
+
+.compass-answer-button:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.compass-answer-button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+  transform: none;
+}
+
+.compass-answer-letter {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid rgba(79, 220, 125, 0.25);
+  border-radius: 11px;
+  background: rgba(79, 220, 125, 0.08);
+  color: #65eb92;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.compass-answer-button:hover
+.compass-answer-letter {
+  border-color: #50df80;
+  background: #50df80;
+  color: #07130c;
+}
+
+.compass-privacy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 22px 0 0;
+  color: #7f9285;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+/* ========================================
+   RESULTADO DA BÚSSOLA
+======================================== */
+
+.compass-result-header {
+  text-align: center;
+}
+
+.compass-result-header
+.compass-result-icon {
+  display: grid;
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 20px;
+  place-items: center;
+  border: 1px solid rgba(79, 220, 125, 0.3);
+  border-radius: 24px;
+  background: rgba(79, 220, 125, 0.1);
+  font-size: 2.4rem;
+  box-shadow:
+    0 0 40px rgba(79, 220, 125, 0.1);
+}
+
+.compass-result-header h1 {
+  margin: 8px 0;
+  color: #f5fff8;
+  font-size: clamp(2rem, 7vw, 3.8rem);
+  line-height: 1;
+}
+
+.compass-result-epithet {
+  margin: 14px 0;
+  color: #50df80;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.compass-result-header .subtitle {
+  max-width: 620px;
+  margin: 14px auto 0;
+  color: #b9c8bd;
+  line-height: 1.6;
+}
+
+.compass-result-profile {
+  display: grid;
+  gap: 14px;
+  margin-top: 30px;
+}
+
+.compass-result-axis {
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.compass-result-axis header,
+.compass-result-axis footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.compass-result-axis header {
+  margin-bottom: 13px;
+  color: #eaf5ed;
+}
+
+.compass-result-axis header span {
+  font-weight: 750;
+}
+
+.compass-result-axis header strong {
+  color: #50df80;
+}
+
+.compass-result-axis footer {
+  margin-top: 9px;
+  color: #7f9285;
+  font-size: 0.72rem;
+}
+
+.compass-axis-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      90deg,
+      #4f8fff,
+      #dadada 50%,
+      #ef6767
+    );
+}
+
+.compass-axis-marker {
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  border: 3px solid #08140e;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.25);
+  transform: translate(-50%, -50%);
+}
+
+.compass-disclaimer {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid rgba(255, 203, 88, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 203, 88, 0.055);
+  color: #c8c2ad;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.compass-disclaimer p {
+  margin: 0;
+}
+
+.compass-result-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 11px;
+  margin-top: 24px;
+}
+
+.compass-result-actions
+#use-compass-result {
+  grid-column: 1 / -1;
+}
+
+/* Entrada suave da pergunta */
+
+.compass-question-card,
+.compass-answer-button {
+  animation:
+    compass-card-entry
+    280ms ease both;
+}
+
+.compass-answer-button:nth-child(2) {
+  animation-delay: 45ms;
+}
+
+.compass-answer-button:nth-child(3) {
+  animation-delay: 90ms;
+}
+
+.compass-answer-button:nth-child(4) {
+  animation-delay: 135ms;
+}
+
+@keyframes compass-card-entry {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsividade */
+
+@media (max-width: 650px) {
+  .political-compass-screen,
+  .political-compass-result-screen {
+    width: 100%;
+    padding: 20px 16px;
+    border-radius: 20px;
+  }
+
+  .compass-heading {
+    align-items: flex-start;
+  }
+
+  .compass-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    font-size: 1.6rem;
+  }
+
+  .compass-question-card {
+    margin-top: 22px;
+    padding: 22px 18px;
+  }
+
+  .compass-answer-button {
+    grid-template-columns: 38px 1fr;
+    padding: 14px;
+    font-size: 0.92rem;
+  }
+
+  .compass-answer-letter {
+    width: 30px;
+    height: 30px;
+  }
+
+  .compass-result-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .compass-result-actions
+  #use-compass-result {
+    grid-column: auto;
+  }
+}
