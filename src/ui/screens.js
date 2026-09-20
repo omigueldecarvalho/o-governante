@@ -15,6 +15,7 @@ export function renderHomeScreen({
   onStart,
   onResume,
   onHistory,
+  onAbout,
   hasSavedGame
 }) {
   const app = document.querySelector("#app");
@@ -76,6 +77,14 @@ export function renderHomeScreen({
       >
         Histórico de governos
       </button>
+
+      <button
+        type="button"
+        class="secondary-button"
+        id="open-about"
+      >
+      Saiba mais e apoiar
+      </button>
     </section>
   `;
 
@@ -89,6 +98,10 @@ export function renderHomeScreen({
 
   const historyButton = document.querySelector(
     "#government-history"
+  );
+
+  const aboutButton = document.querySelector(
+    "#open-about"
   );
 
   if (startButton && typeof onStart === "function") {
@@ -115,6 +128,16 @@ export function renderHomeScreen({
     historyButton.addEventListener(
       "click",
       onHistory
+    );
+  }
+
+  if (
+    aboutButton &&
+    typeof onAbout === "function"
+  ) {
+    aboutButton.addEventListener(
+      "click",
+      onAbout
     );
   }
 }

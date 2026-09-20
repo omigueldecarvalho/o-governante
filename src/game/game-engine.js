@@ -332,9 +332,18 @@ export function getNextDecision(
   gameState,
   decisions
 ) {
-  const completedDecisions = Number(
-    gameState.government?.decisions ?? 0
-  );
+  const completedDecisions =
+    Math.max(
+      Number(
+        gameState.government
+          ?.decisionsTaken ?? 0
+      ),
+
+      Number(
+        gameState.government
+          ?.decisions ?? 0
+      )
+    );
 
   const nextDecisionNumber =
     completedDecisions + 1;
@@ -346,69 +355,251 @@ export function getNextDecision(
       ? gameState.usedDecisionIds
       : [];
 
+  const gameMode =
+    gameState.settings
+      ?.gameMode ??
+    "classic";
+
+  const isSimulation =
+    gameMode ===
+    "simulation";
+
   /*
-   * Eventos que devem acontecer em
-   * momentos específicos do governo.
+   * Eventos agendados são utilizados
+   * apenas no modo completo.
+   *
+   * showAt:
+   * evento obrigatório.
+   *
+   * minimumDecision:
+   * evento liberado para sorteio.
    */
   const scheduledEvents = [
     {
       id: "faith-interview",
       showAt: 3
     },
+
     {
       id: "new-national-flag",
-      showAt: 1
+      showAt: 5
     },
+
+    {
+      id: "operation-peixe-vivo",
+      showAt: 10
+    },
+
+    {
+      id: "money-suitcase",
+      showAt: 13
+    },
+
     {
       id: "war-of-blocs",
       showAt: 14
     },
+
     {
-    id: "money-suitcase",
-    showAt: 13
+      id: "supreme-court-appointment",
+      showAt: 17
     },
+
     {
-  id: "operation-peixe-vivo",
-  showAt: 10
-},
-{
-  id: "rushed-inauguration",
-  showAt: 36
-},
-{
-  id: "supreme-court-appointment",
-  showAt: 17
-},
- {
-    id: "deepfake-monitoring-center",
-    minimumDecision: 9
-  },
-  {
-  id: "little-shirt-tax",
-  minimumDecision: 1
-}
+      id: "rushed-inauguration",
+      showAt: 36
+    },
+
+    {
+      id:
+        "deepfake-monitoring-center",
+
+      minimumDecision: 9
+    },
+
+    {
+      id: "little-shirt-tax",
+      minimumDecision: 1
+    }
   ];
 
   /*
-   * Procura um evento obrigatório
-   * que já tenha chegado à sua vez.
+   * Verifica se uma decisão pode ser
+   * utilizada normalmente.
+   */
+  function isAvailable(
+    decision
+  ) {
+    return (
+      canUseDecision(
+        gameState,
+        decision
+      ) &&
+      meetsRequirements(
+        gameState,
+        decision
+      )
+    );
+  }
+
+  /*
+   * MODO EXPRESSO
+   *
+   * Rodadas 1, 2, 4 e 5:
+   * decisões comuns.
+   *
+   * Rodada 3:
+   * um minigame curto.
+   */
+  if (isSimulation) {
+    const expressMinigameIds =
+      new Set([
+        "money-suitcase",
+
+        "deepfake-monitoring-center",
+
+        "little-shirt-tax"
+      ]);
+
+    const expressMinigameTypes =
+      new Set([
+        "law",
+        "press-conference",
+        "money-suitcase",
+        "deepfake-center",
+        "import-tax"
+      ]);
+
+    function isExpressMinigame(
+      decision
+    ) {
+      return (
+        expressMinigameIds.has(
+          decision.id
+        ) ||
+        expressMinigameTypes.has(
+          decision.type
+        )
+      );
+    }
+
+    function isCommonDecision(
+      decision
+    ) {
+      return (
+        !decision.type ||
+        decision.type ===
+          "common" ||
+        decision.type ===
+          "decision"
+      );
+    }
+
+    const eligibleDecisions =
+      decisions.filter(
+        (decision) => {
+          if (
+            usedDecisionIds.includes(
+              decision.id
+            )
+          ) {
+            return false;
+          }
+
+          return isAvailable(
+            decision
+          );
+        }
+      );
+
+    /*
+     * Terceira rodada:
+     * tenta apresentar um minigame.
+     */
+    if (
+      nextDecisionNumber === 3
+    ) {
+      const minigames =
+        eligibleDecisions.filter(
+          isExpressMinigame
+        );
+
+      if (minigames.length > 0) {
+        return selectWeightedDecision(
+          minigames
+        );
+      }
+    }
+
+    /*
+     * Demais rodadas:
+     * somente decisões comuns.
+     */
+    const commonDecisions =
+      eligibleDecisions.filter(
+        isCommonDecision
+      );
+
+    if (
+      commonDecisions.length > 0
+    ) {
+      return selectWeightedDecision(
+        commonDecisions
+      );
+    }
+
+    /*
+     * Segurança caso não existam mais
+     * decisões comuns disponíveis.
+     */
+    const safeFallback =
+      eligibleDecisions.filter(
+        (decision) =>
+          isExpressMinigame(
+            decision
+          )
+      );
+
+    if (
+      safeFallback.length > 0
+    ) {
+      return selectWeightedDecision(
+        safeFallback
+      );
+    }
+
+    return null;
+  }
+
+  /*
+   * MODO COMPLETO
+   *
+   * Procura eventos obrigatórios
+   * definidos com showAt.
    */
   for (
     const scheduledEvent
     of scheduledEvents
   ) {
+    if (
+      typeof scheduledEvent.showAt !==
+      "number"
+    ) {
+      continue;
+    }
+
     const wasUsed =
       usedDecisionIds.includes(
         scheduledEvent.id
       );
 
-    const reachedScheduledMoment =
+    const reachedMoment =
       nextDecisionNumber >=
       scheduledEvent.showAt;
 
     if (
-      reachedScheduledMoment &&
-      !wasUsed
+      !wasUsed &&
+      reachedMoment
     ) {
       const scheduledDecision =
         decisions.find(
@@ -417,47 +608,66 @@ export function getNextDecision(
             scheduledEvent.id
         );
 
-      if (scheduledDecision) {
+      if (
+        scheduledDecision &&
+        isAvailable(
+          scheduledDecision
+        )
+      ) {
         return scheduledDecision;
       }
     }
   }
 
   /*
-   * Seleção das decisões comuns.
+   * Seleção normal do modo completo.
    */
   const availableDecisions =
-    decisions.filter((decision) => {
-      const scheduledEvent =
-        scheduledEvents.find(
-          (event) =>
-            event.id === decision.id
+    decisions.filter(
+      (decision) => {
+        const scheduledEvent =
+          scheduledEvents.find(
+            (event) =>
+              event.id ===
+              decision.id
+          );
+
+        if (scheduledEvent) {
+          const activationDecision =
+            scheduledEvent.showAt ??
+            scheduledEvent
+              .minimumDecision;
+
+          if (
+            typeof activationDecision ===
+              "number" &&
+            nextDecisionNumber <
+              activationDecision
+          ) {
+            return false;
+          }
+
+          /*
+           * Eventos com showAt são
+           * retornados pelo bloco
+           * obrigatório acima.
+           */
+          if (
+            typeof scheduledEvent
+              .showAt === "number" &&
+            !usedDecisionIds.includes(
+              decision.id
+            )
+          ) {
+            return false;
+          }
+        }
+
+        return isAvailable(
+          decision
         );
-
-      /*
-       * Impede que um evento agendado
-       * apareça aleatoriamente antes
-       * da decisão programada.
-       */
-      if (
-        scheduledEvent &&
-        nextDecisionNumber <
-          scheduledEvent.showAt
-      ) {
-        return false;
       }
-
-      return (
-        canUseDecision(
-          gameState,
-          decision
-        ) &&
-        meetsRequirements(
-          gameState,
-          decision
-        )
-      );
-    });
+    );
 
   if (
     availableDecisions.length === 0
@@ -480,10 +690,6 @@ export function applyChoice(
       currentGameState
     );
 
-  /*
-   * Garante que todas as estruturas
-   * necessárias existam.
-   */
   gameState.player ??= {};
   gameState.indicators ??= {};
   gameState.factions ??= {};
@@ -506,14 +712,6 @@ export function applyChoice(
         .personalWealth ?? 0
     );
 
-  /*
-   * decisionsTaken é o contador
-   * principal do jogo.
-   *
-   * decisions fica sincronizado para
-   * compatibilidade com Feed, eventos
-   * agendados e códigos antigos.
-   */
   const completedBefore =
     Math.max(
       Number(
@@ -553,9 +751,6 @@ export function applyChoice(
     effects.politics
   );
 
-  /*
-   * Corrupção
-   */
   if (
     typeof effects.corruption ===
     "number"
@@ -573,9 +768,6 @@ export function applyChoice(
       );
   }
 
-  /*
-   * Patrimônio pessoal
-   */
   if (
     typeof effects.personalWealth ===
     "number"
@@ -591,78 +783,64 @@ export function applyChoice(
       );
   }
 
-  /*
-   * Consequência futura
-   */
   if (choice.futureEffect) {
-  const afterMonths =
-    Math.max(
-      1,
-      Number(
+    const afterMonths =
+      Math.max(
+        1,
+        Number(
+          choice.futureEffect
+            .afterMonths ?? 1
+        )
+      );
+
+    const monthsPerDecision =
+      Math.max(
+        1,
+        Number(
+          gameState.settings
+            ?.monthsPerDecision ?? 1
+        )
+      );
+
+    const decisionsUntilEffect =
+      Math.max(
+        1,
+        Math.ceil(
+          afterMonths /
+          monthsPerDecision
+        )
+      );
+
+    gameState.pendingConsequences.push({
+      id:
+        `${decision.id}-${choice.id}-${currentDecisionNumber}`,
+
+      sourceDecisionId:
+        decision.id,
+
+      sourceChoiceId:
+        choice.id,
+
+      ...structuredClone(
         choice.futureEffect
-          .afterMonths ?? 1
-      )
-    );
+      ),
 
-  const monthsPerDecision =
-    Math.max(
-      1,
-      Number(
-        gameState.settings
-          ?.monthsPerDecision ?? 1
-      )
-    );
+      triggerAtDecision:
+        currentDecisionNumber +
+        decisionsUntilEffect
+    });
+  }
 
-  /*
-   * Clássico:
-   * 6 meses = 6 decisões.
-   *
-   * Expresso:
-   * 6 meses = próxima decisão.
-   * 18 meses = duas decisões.
-   */
-  const decisionsUntilEffect =
-    Math.max(
-      1,
-      Math.ceil(
-        afterMonths /
-        monthsPerDecision
-      )
-    );
-
-  gameState.pendingConsequences.push({
-    id:
-      `${decision.id}-${choice.id}-${currentDecisionNumber}`,
-
-    sourceDecisionId:
-      decision.id,
-
-    sourceChoiceId:
-      choice.id,
-
-    ...structuredClone(
-      choice.futureEffect
-    ),
-
-    triggerAtDecision:
-      currentDecisionNumber +
-      decisionsUntilEffect
-  });
-}
-
-  /*
-   * Final obrigatório
-   */
   if (choice.forcedEnding) {
     gameState.forcedEnding =
       choice.forcedEnding;
   }
 
-  /*
-   * Histórico da decisão
-   */
   gameState.history.push({
     type: "decision",
+
+    decisionType:
+      decision.type ?? "common",
 
     decisionId:
       decision.id,
@@ -684,13 +862,9 @@ export function applyChoice(
 
     law:
       choice.law
-        ? {
-            name:
-              choice.law.name,
-
-            reason:
-              choice.law.reason
-          }
+        ? structuredClone(
+            choice.law
+          )
         : null,
 
     budget:
@@ -743,36 +917,29 @@ export function applyChoice(
           )
         : null,
 
-    war:
-      choice.metadata?.war
+    metadata:
+      choice.metadata
         ? structuredClone(
-            choice.metadata.war
-          )
-        : null,
-
-    jkRoad:
-      choice.metadata?.jkRoad
-        ? structuredClone(
-            choice.metadata.jkRoad
+            choice.metadata
           )
         : null,
 
     year:
       gameState.government
-        .year,
+        .year ?? 1,
 
     month:
       gameState.government
-        .month
+        .month ?? 1
   });
 
-  /*
-   * Resumo usado pelo Feed da Nação.
-   */
   gameState.government
     .lastDecisionSummary = {
       decisionId:
         decision.id,
+
+      decisionType:
+        decision.type ?? "common",
 
       choiceId:
         choice.id,
@@ -790,9 +957,6 @@ export function applyChoice(
         currentDecisionNumber
     };
 
-  /*
-   * Evita IDs repetidos.
-   */
   if (
     !gameState.usedDecisionIds
       .includes(decision.id)
@@ -802,22 +966,7 @@ export function applyChoice(
     );
   }
 
-  /*
-   * Avança o calendário.
-   */
   advanceMonth(gameState);
-
-  /*
-   * Sincroniza os dois contadores
-   * depois do avanço do mês.
-   */
-  gameState.government
-    .decisionsTaken =
-    currentDecisionNumber;
-
-  gameState.government
-    .decisions =
-    currentDecisionNumber;
 
   console.log(
     "📊 Decisão contabilizada:",
@@ -828,7 +977,15 @@ export function applyChoice(
 
       decisions:
         gameState.government
-          .decisions
+          .decisions,
+
+      elapsedMonths:
+        gameState.government
+          .elapsedMonths,
+
+      gameMode:
+        gameState.settings
+          ?.gameMode
     }
   );
 

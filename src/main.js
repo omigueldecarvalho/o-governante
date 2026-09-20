@@ -217,6 +217,20 @@ import {
   applySimulationProfile
 } from "./game/simulation-engine.js";
 
+import {
+  renderAboutScreen
+} from "./ui/about-screen.js";
+
+import "./ui/about-screen.css";
+
+import {
+  installDebugPanel
+} from "./ui/debug-panel.js";
+
+import "./ui/debug-panel.css";
+
+let debugForcedDecisionId = null;
+
 
 let gameState = null;
 let currentDecision = null;
@@ -228,6 +242,7 @@ function showHomeScreen() {
     onStart: startNewElection,
     onResume: resumeGame,
     onHistory: showGovernmentHistory,
+    onAbout: showAboutScreen,
     hasSavedGame: hasSavedGame()
   });
 }
@@ -514,30 +529,49 @@ function showNextDecision() {
    * possui prioridade sobre eventos
    * e decisões aleatórias.
    */
-  const investigationIsPending =
-    shouldTriggerInvestigation(
-      gameState
-    );
-
-  if (investigationIsPending) {
-    currentDecision =
-      DECISIONS.find(
+  const debugDecision =
+  debugForcedDecisionId
+    ? DECISIONS.find(
         (decision) =>
           decision.id ===
-          "patrimonial-investigation"
-      );
-  } else {
-   
-    /*
-     * 4. Fluxo normal de decisões.
-     */
-    currentDecision =
-      getNextDecision(
-        gameState,
-        DECISIONS
-      );
-  }
+          debugForcedDecisionId
+      )
+    : null;
 
+/*
+ * O ID é limpo imediatamente para
+ * não repetir o evento na próxima rodada.
+ */
+debugForcedDecisionId = null;
+
+const investigationIsPending =
+  shouldTriggerInvestigation(
+    gameState
+  );
+
+if (debugDecision) {
+  /*
+   * O painel de testes possui
+   * prioridade sobre o sorteio normal.
+   */
+  currentDecision =
+    debugDecision;
+} else if (
+  investigationIsPending
+) {
+  currentDecision =
+    DECISIONS.find(
+      (decision) =>
+        decision.id ===
+        "patrimonial-investigation"
+    );
+} else {
+  currentDecision =
+    getNextDecision(
+      gameState,
+      DECISIONS
+    );
+}
   /*
    * Sempre valide antes de acessar
    * currentDecision.type.
@@ -1505,7 +1539,7 @@ function processIntermediateElection() {
     return;
   }
 
-  // restante da função...
+  
 
   const alreadyCompleted =
     gameState.electionsCompleted.some(
@@ -1543,6 +1577,14 @@ function processIntermediateElection() {
   showNextDecision();
 }
 
+function showAboutScreen() {
+  removeNationFeedSidebar();
+
+  renderAboutScreen({
+    onBack: showHomeScreen
+  });
+}
+
 function showFootballTeamSelection() {
   renderFootballTeamScreen({
     onComplete: (team) => {
@@ -1562,4 +1604,106 @@ function showFootballTeamSelection() {
       startElection("initial");
     }
   });
+}
+
+function openDebugDecision(
+  decisionId
+) {
+  if (!gameState) {
+    window.alert(
+      "Inicie uma partida antes de abrir um evento."
+    );
+
+    return;
+  }
+
+  const decision = DECISIONS.find(
+    (item) =>
+      item.id === decisionId
+  );
+
+  if (!decision) {
+    window.alert(
+      `Evento não encontrado: ${decisionId}`
+    );
+
+    return;
+  }
+
+  debugForcedDecisionId =
+    decisionId;
+
+  showNextDecision();
+}
+
+installDebugPanel({
+  getGameState: () => gameState,
+  decisions: DECISIONS,
+  endings: ENDINGS,
+
+  onOpenDecision: openDebugDecision,
+
+  onApplyState: applyDebugState,
+
+  onResetUsedDecisions: () => {
+    if (!gameState) return;
+
+    gameState.usedDecisionIds = [];
+    saveGame(gameState);
+  },
+
+  onForceEnding: (endingId) => {
+    const ending = Object.values(
+      ENDINGS
+    ).find(
+      (item) => item.id === endingId
+    );
+
+    if (ending) {
+      showEnding(ending);
+    }
+  },
+
+  onClearSave: () => {
+    clearSavedGame();
+    gameState = null;
+    currentDecision = null;
+    showHomeScreen();
+  },
+
+  onGoHome: showHomeScreen
+});
+
+function applyDebugState(values) {
+  if (!gameState) {
+    window.alert(
+      "Inicie uma partida antes de alterar o estado."
+    );
+    return;
+  }
+
+  gameState.indicators = {
+    ...gameState.indicators,
+    ...values.indicators
+  };
+
+  gameState.corruption =
+    values.corruption;
+
+  gameState.player.personalWealth =
+    values.personalWealth;
+
+  gameState.government.decisionsTaken =
+    values.government.decisionsTaken;
+
+  gameState.government.decisions =
+    values.government.decisionsTaken;
+
+  gameState.government.year =
+    values.government.year;
+
+  gameState.government.month =
+    values.government.month;
+
+  saveGame(gameState);
 }

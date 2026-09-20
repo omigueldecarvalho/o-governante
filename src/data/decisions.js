@@ -1,3 +1,7 @@
+import {
+  COMMON_DECISIONS
+} from "./common-decisions-pack.js";
+
 const BASE_DECISIONS = [
   {
     id: "school-meals",
@@ -2088,8 +2092,10 @@ const DEFAULT_POLITICAL_EFFECTS = {
   personalism: 0
 };
 
-export const DECISIONS =
-  BASE_DECISIONS.map((decision) => {
+export const DECISIONS = [
+  ...BASE_DECISIONS,
+  ...COMMON_DECISIONS
+].map((decision) => {
     /*
      * Minigames podem não possuir
      * escolhas tradicionais.
