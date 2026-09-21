@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Identidade visual — O Governante</title>
+    <style>
+      :root { color-scheme: dark; --bg:#0b1711; --surface:#17271e; --green:#50dd7a; --paper:#f1ebd8; --gold:#f3c957; --text:#f4f5f1; --danger:#e05252; }
+      * { box-sizing: border-box; }
+      body { margin:0; background:var(--bg); color:var(--text); font-family:Inter,Arial,sans-serif; }
+      main { width:min(1120px,calc(100% - 32px)); margin:auto; padding:56px 0 80px; }
+      .eyebrow { color:var(--green); text-transform:uppercase; letter-spacing:.18em; font-weight:900; }
+      h1 { margin:.2em 0; font-size:clamp(42px,8vw,88px); line-height:.95; }
+      .lead { max-width:760px; color:#c6d0c9; font-size:20px; line-height:1.6; }
+      section { margin-top:48px; }
+      .panel { border:1px solid #31503d; border-radius:28px; padding:32px; background:var(--surface); }
+      .light { background:var(--paper); }
+      .logo { display:block; width:100%; max-height:260px; }
+      .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:16px; }
+      .swatch { overflow:hidden; border-radius:18px; border:1px solid #31503d; background:var(--surface); }
+      .swatch-color { height:116px; }
+      .swatch p { margin:0; padding:16px; font-weight:800; }
+      .mark-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+      .mark-box { min-height:320px; display:grid; place-items:center; border-radius:24px; padding:32px; }
+      .mark-box img { width:min(100%,260px); }
+      .mark-box.dark { background:#07100b; }
+      .mark-box.cream { background:var(--paper); }
+      .og { width:100%; border-radius:24px; box-shadow:0 25px 70px #0008; }
+      code { color:var(--gold); }
+      @media (max-width:640px){ .mark-grid{grid-template-columns:1fr;} .panel{padding:18px;} }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">Sistema visual oficial</p>
+      <h1>O Governante</h1>
+      <p class="lead">Uma identidade institucional o suficiente para parecer importante e torta o suficiente para lembrar que tudo isso é uma sátira.</p>
+
+      <section class="panel light">
+        <img class="logo" src="public/brand/logo-horizontal.svg" alt="Logo horizontal de O Governante" />
+      </section>
+
+      <section class="panel">
+        <img class="logo" src="public/brand/logo-horizontal-light.svg" alt="Logo clara de O Governante" />
+      </section>
+
+      <section>
+        <p class="eyebrow">Símbolo</p>
+        <div class="mark-grid">
+          <div class="mark-box dark"><img src="public/brand/logo-mark.svg" alt="Símbolo sobre fundo escuro" /></div>
+          <div class="mark-box cream"><img src="public/brand/logo-mark.svg" alt="Símbolo sobre fundo claro" /></div>
+        </div>
+      </section>
+
+      <section>
+        <p class="eyebrow">Paleta</p>
+        <div class="grid">
+          <div class="swatch"><div class="swatch-color" style="background:#0b1711"></div><p>Fundo · #0B1711</p></div>
+          <div class="swatch"><div class="swatch-color" style="background:#17271e"></div><p>Superfície · #17271E</p></div>
+          <div class="swatch"><div class="swatch-color" style="background:#50dd7a"></div><p>Verde · #50DD7A</p></div>
+          <div class="swatch"><div class="swatch-color" style="background:#f1ebd8"></div><p>Papel · #F1EBD8</p></div>
+          <div class="swatch"><div class="swatch-color" style="background:#f3c957"></div><p>Dourado · #F3C957</p></div>
+          <div class="swatch"><div class="swatch-color" style="background:#e05252"></div><p>Crise · #E05252</p></div>
+        </div>
+      </section>
+
+      <section>
+        <p class="eyebrow">Compartilhamento</p>
+        <img class="og" src="public/brand/og-image.svg" alt="Capa social de O Governante" />
+      </section>
+    </main>
+  </body>
+</html>

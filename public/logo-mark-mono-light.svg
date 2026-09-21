@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Símbolo monocromático claro de O Governante">
+  <circle cx="256" cy="256" r="222" fill="none" stroke="#F4F5F1" stroke-width="22"/>
+  <circle cx="256" cy="256" r="194" fill="#F4F5F1"/>
+  <text x="256" y="350" text-anchor="middle" fill="#0B1711"
+        font-family="Arial Black, Arial, sans-serif" font-size="278" font-weight="900">G</text>
+  <g transform="rotate(-21 256 256)">
+    <rect x="62" y="226" width="388" height="76" fill="#0B1711"/>
+  </g>
+  <circle cx="256" cy="256" r="194" fill="none" stroke="#F4F5F1" stroke-width="8"/>
+</svg>
