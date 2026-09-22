@@ -8855,3 +8855,37 @@ h1 {
     width: 100%;
   }
 }
+
+.home-institutional-footer {
+  width: 100%;
+  margin-top: 32px;
+  padding-top: 24px;
+
+  border-top: 1px solid
+    rgba(255, 255, 255, 0.1);
+
+  text-align: center;
+}
+
+.home-institutional-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 18px;
+}
+
+.home-institutional-footer a {
+  color: #aebbb2;
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+
+.home-institutional-footer a:hover {
+  color: #50db78;
+}
+
+.home-institutional-footer p {
+  margin: 16px 0 0;
+  color: #728078;
+  font-size: 0.75rem;
+}

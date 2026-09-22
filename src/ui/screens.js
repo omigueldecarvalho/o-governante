@@ -94,6 +94,34 @@ export function renderHomeScreen({
       >
         ℹ️ Saiba mais e apoiar
       </button>
+
+      <footer class="home-institutional-footer">
+        <nav aria-label="Links institucionais">
+          <a href="/sobre/">
+            Sobre
+          </a>
+
+          <a href="/privacidade/">
+            Privacidade
+          </a>
+
+          <a href="/termos/">
+            Termos
+          </a>
+
+          <a href="/fontes/">
+            Fontes
+          </a>
+
+          <a href="/contato/">
+            Contato
+          </a>
+        </nav>
+
+        <p>
+          © 2026 O Governante
+        </p>
+      </footer>
     </section>
   `;
 
